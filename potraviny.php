@@ -15,6 +15,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/spolecne.php';
+require_once __DIR__ . '/generator_funkce.php';   // pro nacti_potraviny_se_slevami() a esc/fmt
 
 vyzaduj_prihlaseni();
 

@@ -315,7 +315,8 @@ function panelTik(int $aktualni, float $cilovy): array
         </div>
         <div class="d-flex justify-content-between align-items-center mb-5 no-tisk">
             <span class="text-muted small">
-                V obchodním sloupci je vždy obchod s aktuální slevou (v ✓ v plné prognoze – platnost_do ≥ dnes).
+                Ve sloupci obchodu je vždy obchod s nejlevnější <strong>aktuální</strong> slevou
+                (sleva musí být stále platná &ndash; <em>platnost_do ≥ dnešní datum</em>).
             </span>
             <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
                 🖨️ Vytisknout seznam
