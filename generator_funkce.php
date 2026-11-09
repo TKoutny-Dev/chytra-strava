@@ -35,28 +35,6 @@ const PODILY_JIDEL = [
 const BONUS_SLEVY = 1.25;
 
 /* ============================================================
- * POMOCNÉ FUNKCE VÝSTUPU
- * ============================================================ */
-
-/** htmlspecialchars – ochrana proti XSS na jednom místě */
-function esc($hodnota): string
-{
-    return htmlspecialchars((string) $hodnota, ENT_QUOTES, 'UTF-8');
-}
-
-/** formát čísla v českém zápisu (mezera jako tisíce, čárka jako desetinná) */
-function fmt(float $cislo, int $desetinnaMista = 1): string
-{
-    return number_format($cislo, $desetinnaMista, ',', ' ');
-}
-
-/** ořízne celé číslo do povoleného rozsahu */
-function clamp_int(int $hodnota, int $min, int $max): int
-{
-    return max($min, min($max, $hodnota));
-}
-
-/* ============================================================
  * 1) NAČTENÍ DAT – potraviny + akce (slevy)
  * ============================================================ */
 

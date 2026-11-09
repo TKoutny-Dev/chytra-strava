@@ -19,6 +19,28 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 
 /* ============================================================
+ * POMOCNÉ FUNKCE VÝSTUPU (pouští je každý soubor přes spolecne.php)
+ * ============================================================ */
+
+/** htmlspecialchars – ochrana proti XSS na jednom místě */
+function esc($hodnota): string
+{
+    return htmlspecialchars((string) $hodnota, ENT_QUOTES, 'UTF-8');
+}
+
+/** formát čísla v českém zápisu (mezera jako tisíce, čárka jako desetinná) */
+function fmt(float $cislo, int $desetinnaMista = 1): string
+{
+    return number_format($cislo, $desetinnaMista, ',', ' ');
+}
+
+/** ořízne celé číslo do povoleného rozsahu */
+function clamp_int(int $hodnota, int $min, int $max): int
+{
+    return max($min, min($max, $hodnota));
+}
+
+/* ============================================================
  * PŘIHLÁŠENÍ A ROLE
  * ============================================================ */
 
