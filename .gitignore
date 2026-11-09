@@ -1,0 +1,5 @@
+# Ignorujeme logy a dočasné soubory
+*.log
+*.cache
+
+# Později sem přidáme nahrávané soubory a konfiguraci hostingu
