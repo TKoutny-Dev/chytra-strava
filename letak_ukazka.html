@@ -1,0 +1,47 @@
+<!doctype html>
+<!-- ============================================================
+letak_ukazka.html – UKÁZKOVÝ digitální leták
+Slouží jako testovací „web supermarketu" pro funkci DOMDocument
+parsing. Struktura je stejná, jakou reálně používají webobchody
+(list produktu = div, název v h3, cena ve spanu).
+Ceny jsou za 100 g – stejné měřítko jako má tabulka potraviny,
+aby ukázka byla srozumitelná na obhajobě.
+============================================================ -->
+<html lang="cs">
+<head><meta charset="utf-8"><title>Ukázkový leták – akce tohoto týdne</title></head>
+<body>
+<h1>Akční nabídka</h1>
+
+<div class="produkt">
+    <h3>Kuřecí prsa 500 g</h3>
+    <span class="cena">9,49&nbsp;Kč</span>
+</div>
+
+<div class="produkt">
+    <h3>Tvaroh polotučný 200 g</h3>
+    <span class="cena">&nbsp;4,49 Kč&nbsp;</span>
+</div>
+
+<div class="produkt">
+    <h3>Čočka červená 500 g</h3>
+    <span class="cena">4,10&nbsp;Kč</span>
+</div>
+
+<!-- produkt bez shody v katalogu – skript musí umět NECO přádné vypustit -->
+<div class="produkt">
+    <h3>Rajská jablka 1 kg</h3>
+    <span class="cena">37,99 Kč</span>
+</div>
+
+<div class="produkt">
+    <h3>Vinný ocet 1 l</h3>
+    <span class="cena">19,90 Kč</span>
+</div>
+
+<div class="produkt">
+    <h3>Minerální voda sakur 6-pack</h3>
+    <span class="cena">49,90 Kč</span>
+</div>
+
+</body>
+</html>

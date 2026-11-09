@@ -138,6 +138,7 @@ usort($potraviny, static fn(array $a, array $b): int => strcmp($a['nazev'], $b['
             <li class="nav-item"><a class="nav-link" href="index.php">Generátor</a></li>
             <li class="nav-item"><a class="nav-link" href="demo_dotaz.php">Přehled slev</a></li>
             <li class="nav-item"><a class="nav-link active" href="potraviny.php">Správa potravin</a></li>
+            <li class="nav-item"><a class="nav-link" href="slevy.php">Správa slev</a></li>
         </ul>
         <span class="navbar-text me-3">👤 <?= esc($uzivatel['jmeno']) ?> (<?= esc($uzivatel['role']) ?>)</span>
         <a href="odhlaseni.php" class="btn btn-outline-light btn-sm">Odhlásit</a>

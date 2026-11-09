@@ -107,6 +107,7 @@ function panelTik(int $aktualni, float $cilovy): array
                 <li class="nav-item"><a class="nav-link" href="demo_dotaz.php">Přehled slev</a></li>
                 <?php if (je_admin()): ?>
                     <li class="nav-item"><a class="nav-link" href="potraviny.php">Správa potravin</a></li>
+                    <li class="nav-item"><a class="nav-link" href="slevy.php">Správa slev</a></li>
                 <?php endif; ?>
             </ul>
             <span class="navbar-text">
