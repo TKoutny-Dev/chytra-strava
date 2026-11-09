@@ -21,4 +21,5 @@ return [
     'databaze_uzivatel' => 'root',
     'databaze_heslo'    => '',
     'znakova_sada'      => 'utf8mb4',
+    'debug'             => false, // true jen při ladění – vypisuje detail chyby
 ];

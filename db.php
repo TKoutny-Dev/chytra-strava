@@ -42,6 +42,14 @@ function getPDO(): PDO
             // Uživateli nic nesmíme prozradit (jméno DB, cesty, hesla...).
             // Detail si zalogujeme pro ladění i budoucí obhajobu.
             error_log('Chyba PDO: ' . $e->getMessage());
+
+            // Debug režim zapínáme ručně v config.php (pouze při ladění!):
+            //   'debug' => true
+            if (!empty($config['debug'])) {
+                http_response_code(500);
+                exit('<pre>Debug – chyba PDO: ' . htmlspecialchars($e->getMessage()) . '</pre>');
+            }
+
             http_response_code(500);
             exit('Chyba připojení k databázi. Zkuste to prosím později.');
         }
