@@ -7,8 +7,9 @@ declare(strict_types=1);
  * (jídelníček) a nákupní seznam s uvedením obchodů se slevami.
  */
 
-require __DIR__ . '/db.php';
-require __DIR__ . '/generator_funkce.php';
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/generator_funkce.php';
+require_once __DIR__ . '/spolecne.php';
 
 $pdo = getPDO();
 
@@ -104,13 +105,26 @@ function panelTik(int $aktualni, float $cilovy): array
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link active" href="index.php">Generátor</a></li>
                 <li class="nav-item"><a class="nav-link" href="demo_dotaz.php">Přehled slev</a></li>
+                <?php if (je_admin()): ?>
+                    <li class="nav-item"><a class="nav-link" href="potraviny.php">Správa potravin</a></li>
+                <?php endif; ?>
             </ul>
-            <span class="navbar-text small">Maturitní projekt – chytrá strava &amp; slevy</span>
+            <span class="navbar-text">
+                <?php $prihlaseny = prihlaseny_uzivatel(); ?>
+                <?php if ($prihlaseny !== null): ?>
+                    👤 <?= esc($prihlaseny['jmeno']) ?>
+                    <a href="odhlaseni.php" class="btn btn-outline-light btn-sm ms-2">Odhlásit</a>
+                <?php else: ?>
+                    <a href="prihlaseni.php" class="btn btn-light btn-sm">Přihlásit se</a>
+                    <a href="registrace.php" class="btn btn-outline-light btn-sm">Registrace</a>
+                <?php endif; ?>
+            </span>
         </div>
     </div>
 </nav>
 
 <main class="container my-4">
+    <?= zobraz_flash() ?>
 
     <div class="text-center mb-4">
         <h1 class="fw-bold">Chytrý generátor jídelníčku</h1>
