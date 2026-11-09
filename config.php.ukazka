@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * config.php.ukazka (vzorové ukázkové nastavení)
+ *
+ * 1) Zkopírujte tento soubor a pojmenujte ho config.php
+ *    (v Linuxu/macOS/GitBash: cp config.php.ukazka config.php
+ *     ve Windows: copy config.php.ukazka config.php)
+ * 2) Vyplňte své skutečné údaje.
+ *
+ * config.php je v .gitignore, aby přihlašovací údaje
+ * nikdy nedostaly do repozitáře (GitHub) – základ bezpečnosti aplikace.
+ *
+ * Hodnoty níže jsou výchozí nastavení pro XAMPP (lokální vývoj).
+ */
+
+return [
+    'databaze_host'     => 'localhost',
+    'databaze_jmeno'    => 'chytra_strava',
+    'databaze_uzivatel' => 'root',
+    'databaze_heslo'    => '',
+    'znakova_sada'      => 'utf8mb4',
+];

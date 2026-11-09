@@ -5,15 +5,13 @@ declare(strict_types=1);
  * db.php – připojení k databázi přes PDO
  * Vrací jeden sdílený PDO objekt pro celou aplikaci.
  *
- * Na XAMPP je výchozí účet root s prázdným heslem.
- * Při nahrání na hosting se změní údaje tady.
+ * Přihlašovací údaje čte ze souboru config.php (není v repozitáři,
+ * viz .gitignore). Na lokálním XAMPP vznikne kopírováním
+ * souboru config.php.ukazka, na hostingu vyplníte údaje
+ * z kontrolního panelu hostingu.
  */
 
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'chytra_strava');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_CHARSET', 'utf8mb4');   // důležité kvůli české diakritice
+$config = require __DIR__ . '/config.php';
 
 /**
  * Vrací PDO instanci (lazy inicializace – vytvoří se jen jednou).
@@ -29,10 +27,13 @@ function getPDO(): PDO
     static $pdo = null;
 
     if ($pdo === null) {
-        $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
+        global $config;
+        $dsn = 'mysql:host=' . $config['databaze_host']
+             . ';dbname='   . $config['databaze_jmeno']
+             . ';charset='  . $config['znakova_sada'];
 
         try {
-            $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+            $pdo = new PDO($dsn, $config['databaze_uzivatel'], $config['databaze_heslo'], [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES   => false,
