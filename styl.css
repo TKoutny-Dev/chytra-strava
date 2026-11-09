@@ -1,0 +1,25 @@
+/* styl.css – doplňky k Bootstrapu pro OptiMeal */
+
+/* jemné stínování karet potravin */
+.karta-jidla {
+    border-radius: 0.75rem;
+}
+
+/* znak slevy se zvýrazní mírným pozadím celé položky */
+.karta-jidla .badge.bg-warning {
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.25);
+}
+
+/* tisk nákupního seznamu = hezký výstup pro uživatele */
+@media print {
+    .no-tisk {
+        display: none !important;
+    }
+    body {
+        background: #fff !important;
+    }
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ccc;
+    }
+}
