@@ -1,8 +1,6 @@
 # Přihlašovací údaje k databázi – NIKDY nedáváme na GitHub
 config.php
 
-# Ignorujeme logy a dočasné soubory
-*.log
-*.cache
-
-# Později sem přidáme nahrávané soubory a konfiguraci hostingu
+# Dočasné ladicí soubory (lokální diagnostika, ne produkční kód)
+_ladba.php
+_ladeni.php
