@@ -108,6 +108,10 @@ function LANGJS_SLOVNIKY(): array
             /* --- souhrn cílí vs. realita --- */
             'skutecnost_cile' => 'Skutečnost vs. cíle',
             'shoda_znacka'   => '%shoda%% shody',
+            'metrika_kalorie'  => 'Kalorie',
+            'metrika_bilkoviny' => 'Bílkoviny',
+            'metrika_sacharidy' => 'Sacharidy',
+            'metrika_tuky'      => 'Tuky',
             'jidelnicek_nadpis' => 'Jídelníček na den',
             'prazdny_jidlo'   => 'Pro toto jídlo se nenašly vhodné potraviny.',
             'denni_cena_jidla' => 'Cena jídla:',
@@ -189,7 +193,11 @@ function LANGJS_SLOVNIKY(): array
 
             /* --- actual vs. targets --- */
             'skutecnost_cile' => 'Actual vs. targets',
-            'shoda_znacka'   => '%shoda%%% match',
+            'shoda_znacka'   => '%shoda%% match',
+            'metrika_kalorie'  => 'Calories',
+            'metrika_bilkoviny' => 'Protein',
+            'metrika_sacharidy' => 'Carbs',
+            'metrika_tuky'      => 'Fat',
             'jidelnicek_nadpis' => 'Meal plan for the day',
             'prazdny_jidlo'   => 'No suitable foods were found for this meal.',
             'denni_cena_jidla' => 'Price of the meal:',

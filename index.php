@@ -207,10 +207,10 @@ function panelTik(int $aktualni, float $cilovy): array
         <div class="row g-3 mb-5">
             <?php
             $metry = [
-                'Kalorie'   => [(float) $celkem['kalorie'],   (float) $cile['kalorie']],
-                'Bílkoviny' => [(float) $celkem['bilkoviny'], (float) $cile['bilkoviny']],
-                'Sacharidy' => [(float) $celkem['sacharidy'], (float) $cile['sacharidy']],
-                'Tuky'      => [(float) $celkem['tuky'],      (float) $cile['tuky']],
+                'metrika_kalorie'   => [(float) $celkem['kalorie'],   (float) $cile['kalorie']],
+                'metrika_bilkoviny' => [(float) $celkem['bilkoviny'], (float) $cile['bilkoviny']],
+                'metrika_sacharidy' => [(float) $celkem['sacharidy'], (float) $cile['sacharidy']],
+                'metrika_tuky'      => [(float) $celkem['tuky'],      (float) $cile['tuky']],
             ];
             foreach ($metry as $nazev => [$aktualni, $cilovy]):
                 $panel = panelTik((int) round($aktualni), $cilovy);
@@ -219,7 +219,7 @@ function panelTik(int $aktualni, float $cilovy): array
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
-                            <span class="fw-semibold"><?= esc($nazev) ?></span>
+                            <span class="fw-semibold"><?= esc(t($nazev)) ?></span>
                             <span class="badge bg-light text-dark"><?= esc(t('shoda_znacka', ['%shoda%' => (string) $panel['shoda']])) ?></span>
                         </div>
                         <div class="fs-4">
