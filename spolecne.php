@@ -13,10 +13,14 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/jazyky.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
+
+// rozhodne o jazyku (podle ?lang= / session / prohlížeče) – viz jazyky.php
+aktualni_jazyk();
 
 /* ============================================================
  * POMOCNÉ FUNKCE VÝSTUPU (pouští je každý soubor přes spolecne.php)

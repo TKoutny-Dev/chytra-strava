@@ -81,11 +81,11 @@ function panelTik(int $aktualni, float $cilovy): array
 }
 ?>
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="<?= esc(aktualni_jazyk()) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OptiMeal – chytrá strava a nákupní seznam</title>
+    <title><?= esc(t('titulek_hlavni')) ?></title>
 
     <!-- Bootstrap 5 z CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -103,21 +103,30 @@ function panelTik(int $aktualni, float $cilovy): array
         </button>
         <div class="collapse navbar-collapse" id="menu">
             <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link active" href="index.php">Generátor</a></li>
-                <li class="nav-item"><a class="nav-link" href="demo_dotaz.php">Přehled slev</a></li>
+                <li class="nav-item"><a class="nav-link active" href="index.php"><?= esc(t('nav_generator')) ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="demo_dotaz.php"><?= esc(t('nav_slevy_prehled')) ?></a></li>
                 <?php if (je_admin()): ?>
-                    <li class="nav-item"><a class="nav-link" href="potraviny.php">Správa potravin</a></li>
-                    <li class="nav-item"><a class="nav-link" href="slevy.php">Správa slev</a></li>
+                    <li class="nav-item"><a class="nav-link" href="potraviny.php"><?= esc(t('nav_potraviny')) ?></a></li>
+                    <li class="nav-item"><a class="nav-link" href="slevy.php"><?= esc(t('nav_slevy')) ?></a></li>
                 <?php endif; ?>
+            </ul>
+            <ul class="navbar-nav ms-auto align-items-lg-center">
+                <li class="nav-item">
+                    <!-- přepínač jazyka (zapamatuje se v session) -->
+                    <a class="nav-link px-2" href="<?= esc(jazyk_odkaz('cs')) ?>" title="Čeština" lang="cs">🇨🇿</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-2" href="<?= esc(jazyk_odkaz('en')) ?>" title="English" lang="en">🇬🇧</a>
+                </li>
             </ul>
             <span class="navbar-text">
                 <?php $prihlaseny = prihlaseny_uzivatel(); ?>
                 <?php if ($prihlaseny !== null): ?>
                     👤 <?= esc($prihlaseny['jmeno']) ?>
-                    <a href="odhlaseni.php" class="btn btn-outline-light btn-sm ms-2">Odhlásit</a>
+                    <a href="odhlaseni.php" class="btn btn-outline-light btn-sm ms-2"><?= esc(t('nav_odhlasit')) ?></a>
                 <?php else: ?>
-                    <a href="prihlaseni.php" class="btn btn-light btn-sm">Přihlásit se</a>
-                    <a href="registrace.php" class="btn btn-outline-light btn-sm">Registrace</a>
+                    <a href="prihlaseni.php" class="btn btn-light btn-sm"><?= esc(t('nav_prihlasit')) ?></a>
+                    <a href="registrace.php" class="btn btn-outline-light btn-sm"><?= esc(t('nav_registrace')) ?></a>
                 <?php endif; ?>
             </span>
         </div>
@@ -128,22 +137,19 @@ function panelTik(int $aktualni, float $cilovy): array
     <?= zobraz_flash() ?>
 
     <div class="text-center mb-4">
-        <h1 class="fw-bold">Chytrý generátor jídelníčku</h1>
-        <p class="text-muted">
-            Zadejte denní cíle a generátor sestaví jídelníček i nákupní seznam –
-            <strong>s prioritou právě probíhajících slev v obchodech</strong>.
-        </p>
+        <h1 class="fw-bold"><?= esc(t('hero_nadpis')) ?></h1>
+        <p class="text-muted"><?= t('hero_podtext') /* obsahuje vlastní <strong> – vědomě bez esc */ ?></p>
     </div>
 
     <!-- ====================== FORMULÁŘ CÍLŮ ====================== -->
     <div class="card shadow-sm mb-5 no-tisk">
-        <div class="card-header bg-white"><strong>Denní cíle</strong></div>
+        <div class="card-header bg-white"><strong><?= esc(t('cile_nadpis')) ?></strong></div>
         <div class="card-body">
             <form method="get" action="index.php" class="row g-3">
                 <div class="col-12">
-                    <label class="form-label" for="uzivatel">Profil uživatele (z databáze)</label>
+                    <label class="form-label" for="uzivatel"><?= esc(t('profil_label')) ?></label>
                     <select name="uzivatel" id="uzivatel" class="form-select" onchange="this.form.submit()">
-                        <option value="">— vlastní cíle (ruční zadání) —</option>
+                        <option value=""><?= esc(t('profil_vlastni')) ?></option>
                         <?php foreach ($uzivatele as $u): ?>
                             <option value="<?= esc($u['id']) ?>"
                                 <?= ($vybranyProfil !== null && (int) $vybranyProfil['id'] === (int) $u['id']) ? 'selected' : '' ?>>
@@ -151,29 +157,29 @@ function panelTik(int $aktualni, float $cilovy): array
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <div class="form-text">Výběr profilu přepíše ručně zadané hodnoty.</div>
+                    <div class="form-text"><?= esc(t('profil_hint')) ?></div>
                 </div>
 
                 <div class="col-sm-6 col-lg-3">
-                    <label class="form-label" for="cil_kalorie">Kalorie (kcal)</label>
+                    <label class="form-label" for="cil_kalorie"><?= esc(t('kcal_label')) ?></label>
                     <input type="number" id="cil_kalorie" name="cil_kalorie" class="form-control"
                            min="800" max="5000" required
                            value="<?= esc($cile['kalorie']) ?>">
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <label class="form-label" for="cil_bilkoviny">Bílkoviny (g)</label>
+                    <label class="form-label" for="cil_bilkoviny"><?= esc(t('bilkoviny_label')) ?></label>
                     <input type="number" id="cil_bilkoviny" name="cil_bilkoviny" class="form-control"
                            min="40" max="300" required
                            value="<?= esc($cile['bilkoviny']) ?>">
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <label class="form-label" for="cil_sacharidy">Sacharidy (g)</label>
+                    <label class="form-label" for="cil_sacharidy"><?= esc(t('sacharidy_label')) ?></label>
                     <input type="number" id="cil_sacharidy" name="cil_sacharidy" class="form-control"
                            min="0" max="600" required
                            value="<?= esc($cile['sacharidy']) ?>">
                 </div>
                 <div class="col-sm-6 col-lg-3">
-                    <label class="form-label" for="cil_tuky">Tuky (g)</label>
+                    <label class="form-label" for="cil_tuky"><?= esc(t('tuky_label')) ?></label>
                     <input type="number" id="cil_tuky" name="cil_tuky" class="form-control"
                            min="20" max="200" required
                            value="<?= esc($cile['tuky']) ?>">
@@ -182,7 +188,7 @@ function panelTik(int $aktualni, float $cilovy): array
                 <div class="col-12 text-end">
                     <input type="hidden" name="generovat" value="1">
                     <button type="submit" class="btn btn-success btn-lg px-4">
-                        🍽️ Vygenerovat jídelníček
+                        <?= esc(t('tlacitko_generovat')) ?>
                     </button>
                 </div>
             </form>
@@ -191,14 +197,13 @@ function panelTik(int $aktualni, float $cilovy): array
 
     <?php if ($jidelnicekVysledek === null): ?>
         <div class="alert alert-info no-tisk">
-            Nastavte cíle výše (nebo vyberte profil) a klikněte na
-            <strong>„Vygenerovat jídelníček"</strong>.
+            <?= t('prazdno_zprava') /* obsahuje vlastní <strong> – vědomě bez esc */ ?>
         </div>
     <?php else: ?>
         <?php $celkem = $jidelnicekVysledek['celkem']; ?>
 
         <!-- ====================== SOUHRN CÍLŮ ====================== -->
-        <h2 class="h4 mb-3">Skutečnost vs. cíle</h2>
+        <h2 class="h4 mb-3"><?= esc(t('skutecnost_cile')) ?></h2>
         <div class="row g-3 mb-5">
             <?php
             $metry = [
@@ -215,7 +220,7 @@ function panelTik(int $aktualni, float $cilovy): array
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <span class="fw-semibold"><?= esc($nazev) ?></span>
-                            <span class="badge bg-light text-dark"><?= esc((string) $panel['shoda']) ?> % shody</span>
+                            <span class="badge bg-light text-dark"><?= esc(t('shoda_znacka', ['%shoda%' => (string) $panel['shoda']])) ?></span>
                         </div>
                         <div class="fs-4">
                             <?= esc(fmt($aktualni, 0)) ?>
@@ -232,17 +237,17 @@ function panelTik(int $aktualni, float $cilovy): array
         </div>
 
         <!-- ====================== JÍDELNÍČEK ====================== -->
-        <h2 class="h4 mb-3">Jídelníček na den</h2>
+        <h2 class="h4 mb-3"><?= esc(t('jidelnicek_nadpis')) ?></h2>
         <div class="row g-3 mb-5">
             <?php foreach ($jidelnicekVysledek['jidelnicek'] as $nazevJidla => $jidloDenne): ?>
             <div class="col-12 col-md-6 col-xl-3">
                 <div class="card h-100 shadow-sm karta-jidla">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <strong><?= esc($nazevJidla) ?></strong>
+                        <strong><?= esc(t('jidlo_' . $nazevJidla)) ?></strong>
                         <span class="text-muted small"><?= esc(fmt((float) $jidloDenne['kalorie'], 0)) ?> kcal</span>
                     </div>
                     <?php if ($jidloDenne['jidla'] === []): ?>
-                        <div class="card-body text-muted small">Pro toto jídlo se nenašly vhodné potraviny.</div>
+                        <div class="card-body text-muted small"><?= esc(t('prazdny_jidlo')) ?></div>
                     <?php else: ?>
                     <ul class="list-group list-group-flush">
                         <?php foreach ($jidloDenne['jidla'] as $jidlo): ?>
@@ -256,14 +261,14 @@ function panelTik(int $aktualni, float $cilovy): array
                                     S: <?= esc(fmt((float) $jidlo['sacharidy'])) ?> |
                                     T: <?= esc(fmt((float) $jidlo['tuky'])) ?> g</span>
                                 <?php if ($jidlo['sleva']): ?>
-                                    <span class="badge bg-warning text-dark">🏷️ sleva: <?= esc($jidlo['obchod']) ?></span>
+                                    <span class="badge bg-warning text-dark"><?= esc(t('sleva_badge')) ?> <?= esc($jidlo['obchod']) ?></span>
                                 <?php endif; ?>
                             </div>
                         </li>
                         <?php endforeach; ?>
                     </ul>
                     <div class="card-footer bg-white small">
-                        Denní cena jídla: <strong><?= esc(fmt((float) $jidloDenne['cena'], 2)) ?> Kč</strong>
+                        <?= esc(t('denni_cena_jidla')) ?> <strong><?= esc(fmt((float) $jidloDenne['cena'], 2)) ?> Kč</strong>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -272,17 +277,17 @@ function panelTik(int $aktualni, float $cilovy): array
         </div>
 
         <!-- ====================== NÁKUPNÍ SEZNAM ====================== -->
-        <h2 class="h4 mb-3">🛒 Nákupní seznam</h2>
+        <h2 class="h4 mb-3"><?= esc(t('nakup_nadpis')) ?></h2>
         <div class="card shadow-sm mb-2 karta-tisk">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Potravina</th>
-                            <th class="text-end">Množství</th>
-                            <th class="text-end">Cena / 100 g</th>
-                            <th>Obchod (nejlevnější)</th>
-                            <th class="text-end">Cena celkem</th>
+                            <th><?= esc(t('th_potravina')) ?></th>
+                            <th class="text-end"><?= esc(t('th_mnozstvi')) ?></th>
+                            <th class="text-end"><?= esc(t('th_cena_100g')) ?></th>
+                            <th><?= esc(t('th_obchod')) ?></th>
+                            <th class="text-end"><?= esc(t('th_cena_celkem')) ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -293,7 +298,7 @@ function panelTik(int $aktualni, float $cilovy): array
                                 <td>
                                     <?= esc($polozka['nazev']) ?>
                                     <?php if ($polozka['sleva']): ?>
-                                        <span class="badge bg-warning text-dark ms-1">sleva</span>
+                                        <span class="badge bg-warning text-dark ms-1"><?= esc(t('sleva_kratky')) ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end"><?= esc(fmt((float) $polozka['gramy'], 0)) ?> g</td>
@@ -307,7 +312,7 @@ function panelTik(int $aktualni, float $cilovy): array
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
-                            <th colspan="4" class="text-end">Celkem den nákupu:</th>
+                            <th colspan="4" class="text-end"><?= esc(t('celkem_den')) ?></th>
                             <th class="text-end"><?= esc(fmt($celkovaCena, 2)) ?> Kč</th>
                         </tr>
                     </tfoot>
@@ -316,19 +321,18 @@ function panelTik(int $aktualni, float $cilovy): array
         </div>
         <div class="d-flex justify-content-between align-items-center mb-5 no-tisk">
             <span class="text-muted small">
-                Ve sloupci obchodu je vždy obchod s nejlevnější <strong>aktuální</strong> slevou
-                (sleva musí být stále platná &ndash; <em>platnost_do ≥ dnešní datum</em>).
+                <?= t('poznamka_obchody') /* obsahuje vlastní <strong>/<em> – vědomě bez esc */ ?>
             </span>
             <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
-                🖨️ Vytisknout seznam
+                <?= esc(t('tlacitko_tisk')) ?>
             </button>
         </div>
     <?php endif; ?>
 </main>
 
 <footer class="text-center text-muted small pb-4 no-tisk">
-    OptiMeal – maturitní projekt • PHP 8 + MySQL (PDO) + Bootstrap 5 •
-    <a href="demo_dotaz.php">technický náhled dotazu</a>
+    <?= esc(t('paticka_text')) ?> •
+    <a href="demo_dotaz.php"><?= esc(t('paticka_nahled')) ?></a>
 </footer>
 
 <!-- Bootstrap JS (rozbalovací menu) -->

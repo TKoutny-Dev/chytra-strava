@@ -20,7 +20,7 @@ $chyba = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_zkontroluj()) {
-        $chyba = 'Vypršela platnost formuláře, zkuste to prosím znovu.';
+        $chyba = t('chyba_csrf');
     } else {
         $email = trim((string) ($_POST['email'] ?? ''));
         $heslo = (string) ($_POST['heslo'] ?? '');
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($uzivatel === false || $uzivatel['hash_hesla'] === null
             || !password_verify($heslo, $uzivatel['hash_hesla'])) {
             // Říkáme JEN obecnou chybu – neodhalíme, že e-mail existuje (prevence profilování)
-            $chyba = 'Neplatný e-mail nebo heslo.';
+            $chyba = t('chyba_prihlaseni');
         } else {
             session_regenerate_id(true);
             $_SESSION['uzivatel'] = [
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'jmeno' => $uzivatel['jmeno'],
                 'role'  => $uzivatel['role'],
             ];
-            flash('Vítejte zpět, ' . $uzivatel['jmeno'] . '!');
+            flash(t('vitej_zpet', ['%jmeno%' => $uzivatel['jmeno']]));
 
             // vracíme tam, kam chtěl původně (viz vyzaduj_prihlaseni)
             $cil = $_SESSION['cil_presmerovani'] ?? 'index.php';
@@ -57,11 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="<?= esc(aktualni_jazyk()) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Přihlášení – OptiMeal</title>
+    <title><?= esc(t('prihl_title')) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styl.css" rel="stylesheet">
 </head>
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <main class="container" style="max-width: 430px;">
     <div class="card shadow-sm mt-5">
         <div class="card-body p-4">
-            <h1 class="h4 text-center mb-3">🥗 OptiMeal – přihlášení</h1>
+            <h1 class="h4 text-center mb-3"><?= esc(t('prihl_h1')) ?></h1>
             <?= zobraz_flash() ?>
             <?php if ($chyba !== null): ?>
                 <div class="alert alert-danger"><?= esc($chyba) ?></div>
@@ -78,26 +78,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="post" action="prihlaseni.php">
                 <?= csrf_pole() ?>
                 <div class="mb-3">
-                    <label class="form-label" for="email">E-mail</label>
+                    <label class="form-label" for="email"><?= esc(t('email_label')) ?></label>
                     <input type="email" id="email" name="email" class="form-control"
                            required autofocus value="<?= esc($_POST['email'] ?? '') ?>">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" for="heslo">Heslo</label>
+                    <label class="form-label" for="heslo"><?= esc(t('heslo_label')) ?></label>
                     <input type="password" id="heslo" name="heslo" class="form-control" required>
                 </div>
-                <button type="submit" class="btn btn-success w-100">Přihlásit se</button>
+                <button type="submit" class="btn btn-success w-100"><?= esc(t('tlacitko_prihlasit')) ?></button>
             </form>
 
             <hr>
             <p class="mb-1 text-center">
-                Nemáte účet? <a href="registrace.php">Zaregistrujte se</a> | <a href="index.php">Na generátor</a>
+                <?= esc(t('nemate_ucet')) ?> <a href="registrace.php"><?= esc(t('zaregistrujte_se')) ?></a> | <a href="index.php"><?= esc(t('na_generator')) ?></a>
             </p>
-        </div>
-        <div class="card-footer bg-white text-muted small text-center">
-            Ukázkové účty na obhajobu:<br>
-            admin@optimeal.cz / <strong>Admin123!</strong> (administrace)<br>
-            petr@optimeal.cz / <strong>Petr123!</strong>
         </div>
     </div>
 </main>

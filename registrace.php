@@ -13,7 +13,7 @@ $chyby = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_zkontroluj()) {
-        $chyby[] = 'Vypršela platnost formuláře, zkuste to prosím znovu.';
+        $chyby[] = t('chyba_csrf');
     } else {
         $jmeno = trim((string) ($_POST['jmeno'] ?? ''));
         $email = trim((string) ($_POST['email'] ?? ''));
@@ -21,13 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // hranatá validace vstupů (serverová, ne jen v prohlížeči)
         if (mb_strlen($jmeno) < 3 || mb_strlen($jmeno) > 100) {
-            $chyby[] = 'Jméno musí mít 3–100 znaků.';
+            $chyby[] = t('chyba_jmeno');
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 150) {
-            $chyby[] = 'Zadejte platný e-mail (max. 150 znaků).';
+            $chyby[] = t('chyba_email');
         }
         if (mb_strlen($heslo) < 8) {
-            $chyby[] = 'Heslo musí mít alespoň 8 znaků.';
+            $chyby[] = t('chyba_heslo');
         }
 
         $pdo = getPDO();
@@ -60,16 +60,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'jmeno' => $jmeno,
                     'role'  => 'uzivatel',
                 ];
-                flash('Registrace proběhla úspěšně. Vítejte, ' . $jmeno . '!');
+                flash(t('registrace_ok', ['%jmeno%' => $jmeno]));
                 header('Location: index.php');
                 exit;
             } catch (PDOException $e) {
                 // unikátní klíč (1062) = duplicitní jméno nebo e-mail
                 if ((int) $e->errorInfo[1] === 1062) {
-                    $chyby[] = 'Uživatel se stejným jménem nebo e-mailem už existuje.';
+                    $chyby[] = t('chyba_duplicita');
                 } else {
                     error_log('Chyba registrace: ' . $e->getMessage());
-                    $chyby[] = 'Registraci se nepovedlo uložit, zkuste to prosím později.';
+                    $chyby[] = t('chyba_ulozeni');
                 }
             }
         }
@@ -77,11 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="<?= esc(aktualni_jazyk()) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Registrace – OptiMeal</title>
+    <title><?= esc(t('registr_title')) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styl.css" rel="stylesheet">
 </head>
@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <main class="container" style="max-width: 480px;">
     <div class="card shadow-sm mt-5">
         <div class="card-body p-4">
-            <h1 class="h4 text-center mb-3">🥗 OptiMeal – registrace</h1>
+            <h1 class="h4 text-center mb-3"><?= esc(t('registr_h1')) ?></h1>
             <?= zobraz_flash() ?>
             <?php if ($chyby !== []): ?>
                 <div class="alert alert-danger mb-3">
@@ -102,25 +102,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="post" action="registrace.php">
                 <?= csrf_pole() ?>
                 <div class="mb-3">
-                    <label class="form-label" for="jmeno">Jméno</label>
+                    <label class="form-label" for="jmeno"><?= esc(t('jmeno_label')) ?></label>
                     <input type="text" id="jmeno" name="jmeno" class="form-control" required
                            minlength="3" maxlength="100" value="<?= esc($_POST['jmeno'] ?? '') ?>">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" for="email">E-mail</label>
+                    <label class="form-label" for="email"><?= esc(t('email_label')) ?></label>
                     <input type="email" id="email" name="email" class="form-control" required
                            value="<?= esc($_POST['email'] ?? '') ?>">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" for="heslo">Heslo (min. 8 znaků)</label>
+                    <label class="form-label" for="heslo"><?= esc(t('heslo_hint')) ?></label>
                     <input type="password" id="heslo" name="heslo" class="form-control" required minlength="8">
                 </div>
-                <button type="submit" class="btn btn-success w-100">Vytvořit účet</button>
+                <button type="submit" class="btn btn-success w-100"><?= esc(t('tlacitko_vytvorit')) ?></button>
             </form>
 
             <hr>
             <p class="mb-0 text-center">
-                Už máte účet? <a href="prihlaseni.php">Přihlaste se</a> | <a href="index.php">Na generátor</a>
+                <?= esc(t('uz_mate_ucet')) ?> <a href="prihlaseni.php"><?= esc(t('prihlaste_se')) ?></a> | <a href="index.php"><?= esc(t('na_generator')) ?></a>
             </p>
         </div>
     </div>
