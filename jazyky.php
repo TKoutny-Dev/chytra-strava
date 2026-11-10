@@ -93,6 +93,7 @@ function LANGJS_SLOVNIKY(): array
             /* --- hlavní strana --- */
             'titulek_hlavni'  => 'OptiMeal – chytrá strava a nákupní seznam',
             'hero_nadpis'     => 'Chytrý generátor jídelníčku',
+            'hero_odrazka'    => 'Ceny v reálném čase',
             'hero_podtext'    => 'Zadejte denní cíle a generátor sestaví jídelníček i nákupní seznam – <strong>s prioritou právě probíhajících slev v obchodech</strong>.',
             'cile_nadpis'     => 'Denní cíle',
             'profil_label'    => 'Profil uživatele (z databáze)',
@@ -164,6 +165,15 @@ function LANGJS_SLOVNIKY(): array
             'chyba_duplicita'  => 'Uživatel se stejným jménem nebo e-mailem už existuje.',
             'chyba_ulozeni'    => 'Registraci se nepovedlo uložit, zkuste to prosím později.',
             'registrace_ok'    => 'Registrace proběhla úspěšně. Vítejte, %jmeno%!',
+
+            /* --- nastavení (modál) --- */
+            'nastaveni_nazev'        => 'Nastavení',
+            'nastaveni_zavrit'       => 'Zavřít',
+            'nastaveni_tema_nazev'   => 'Vzhled',
+            'nastaveni_tema_svetlo'  => 'Světlé',
+            'nastaveni_tema_tma'     => 'Tmavé',
+            'nastaveni_tema_system'  => 'Dle systému',
+            'nastaveni_tema_poznamka' => 'Stav „Dle systému" se automaticky řídí vzhledem vašeho operačního systému. Volba se ukládá do prohlížeče a platí pro celou aplikaci.',
         ],
 
         'en' => [
@@ -179,6 +189,7 @@ function LANGJS_SLOVNIKY(): array
             /* --- main page --- */
             'titulek_hlavni'  => 'OptiMeal – smart diet & shopping list',
             'hero_nadpis'     => 'Smart meal-plan generator',
+            'hero_odrazka'    => 'Live sale prices',
             'hero_podtext'    => 'Enter your daily targets and the planner builds a personal meal plan and shopping list – <strong>automatically prioritising groceries that are on sale right now</strong>.',
             'cile_nadpis'     => 'Daily targets',
             'profil_label'    => 'User profile (from database)',
@@ -250,6 +261,15 @@ function LANGJS_SLOVNIKY(): array
             'chyba_duplicita'  => 'A user with this name or email already exists.',
             'chyba_ulozeni'    => 'Could not save the registration, please try again later.',
             'registrace_ok'    => 'Registration successful. Welcome, %jmeno%!',
+
+            /* --- settings (modal) --- */
+            'nastaveni_nazev'        => 'Settings',
+            'nastaveni_zavrit'       => 'Close',
+            'nastaveni_tema_nazev'   => 'Appearance',
+            'nastaveni_tema_svetlo'  => 'Light',
+            'nastaveni_tema_tma'     => 'Dark',
+            'nastaveni_tema_system'  => 'System',
+            'nastaveni_tema_poznamka' => '"System" automatically follows your operating system\'s appearance. Your choice is stored in the browser and applies to the whole app.',
         ],
     ];
 }

@@ -89,8 +89,24 @@ function panelTik(int $aktualni, float $cilovy): array
 
     <!-- Bootstrap 5 z CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- písmo Inter (	optimalizované číslice, čistý moderní vzhled) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <!-- přizpůsobení stylu -->
     <link href="styl.css" rel="stylesheet">
+    <!-- MOTIV: nastavíme hned před vykreslením, aby stránka NEPROBLIKLA chybou barvou -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('optimeal-motiv') || 'system';
+                var dark = t === 'dark'
+                    || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-motiv', t);
+            } catch (e) { /* localStorage blokován -> necháme světlo */ }
+        })();
+    </script>
 </head>
 <body>
 
@@ -118,6 +134,7 @@ function panelTik(int $aktualni, float $cilovy): array
                 <li class="nav-item">
                     <a class="nav-link px-2" href="<?= esc(jazyk_odkaz('en')) ?>" title="English" lang="en">🇬🇧</a>
                 </li>
+                <?php $_UI_KUS = 'tlacitko'; require __DIR__ . '/ui_nastaveni.php'; ?>
             </ul>
             <span class="navbar-text">
                 <?php $prihlaseny = prihlaseny_uzivatel(); ?>
@@ -136,9 +153,12 @@ function panelTik(int $aktualni, float $cilovy): array
 <main class="container my-4">
     <?= zobraz_flash() ?>
 
-    <div class="text-center mb-4">
-        <h1 class="fw-bold"><?= esc(t('hero_nadpis')) ?></h1>
-        <p class="text-muted"><?= t('hero_podtext') /* obsahuje vlastní <strong> – vědomě bez esc */ ?></p>
+    <div class="om-hero text-center mb-4">
+        <span class="om-odrazka">🥗 &nbsp;<?= esc(t('hero_odrazka')) ?></span>
+        <h1 class="om-hero-nadpis fs-1 fw-bold mb-2"><?= esc(t('hero_nadpis')) ?></h1>
+        <p class="text-muted mx-auto" style="max-width: 620px;">
+            <?= t('hero_podtext') /* obsahuje vlastní <strong> – vědomě bez esc */ ?>
+        </p>
     </div>
 
     <!-- ====================== FORMULÁŘ CÍLŮ ====================== -->
@@ -337,5 +357,8 @@ function panelTik(int $aktualni, float $cilovy): array
 
 <!-- Bootstrap JS (rozbalovací menu) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- přepínač motivu (světlo / tma / systém) -->
+<script src="motiv.js"></script>
+<?php $_UI_KUS = 'modal'; require __DIR__ . '/ui_nastaveni.php'; ?>
 </body>
 </html>
