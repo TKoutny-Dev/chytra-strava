@@ -93,8 +93,8 @@ function panelTik(int $aktualni, float $cilovy): array
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <!-- přizpůsobení stylu -->
-    <link href="styl.css" rel="stylesheet">
+    <!-- přizpůsobení stylu (verze dle doby změny souboru – prohlížeč pak neudrží starou kopii) -->
+    <link href="styl.css?v=<?= (int) filemtime(__DIR__ . '/styl.css') ?>" rel="stylesheet">
     <!-- MOTIV: nastavíme hned před vykreslením, aby stránka NEPROBLIKLA chybou barvou -->
     <script>
         (function () {
@@ -358,7 +358,7 @@ function panelTik(int $aktualni, float $cilovy): array
 <!-- Bootstrap JS (rozbalovací menu) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- přepínač motivu (světlo / tma / systém) -->
-<script src="motiv.js"></script>
+<script src="motiv.js?v=<?= (int) filemtime(__DIR__ . '/motiv.js') ?>"></script>
 <?php $_UI_KUS = 'modal'; require __DIR__ . '/ui_nastaveni.php'; ?>
 </body>
 </html>
