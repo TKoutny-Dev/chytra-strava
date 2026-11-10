@@ -121,6 +121,9 @@ function panelTik(int $aktualni, float $cilovy): array
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link active" href="index.php"><?= esc(t('nav_generator')) ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="demo_dotaz.php"><?= esc(t('nav_slevy_prehled')) ?></a></li>
+                <?php if (prihlaseny_uzivatel() !== null): ?>
+                    <li class="nav-item"><a class="nav-link" href="katalog.php"><?= esc(t('nav_katalog')) ?></a></li>
+                <?php endif; ?>
                 <?php if (je_admin()): ?>
                     <li class="nav-item"><a class="nav-link" href="potraviny.php"><?= esc(t('nav_potraviny')) ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="slevy.php"><?= esc(t('nav_slevy')) ?></a></li>

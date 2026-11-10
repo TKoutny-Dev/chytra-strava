@@ -63,9 +63,23 @@ $casAZ = date('Y-m-d H:i');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Správa slev – OptiMeal</title>
+    <title><?= esc(t('nav_slevy')) ?> – OptiMeal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styl.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="styl.css?v=<?= (int) filemtime(__DIR__ . '/styl.css') ?>" rel="stylesheet">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('optimeal-motiv') || 'system';
+                var dark = t === 'dark'
+                    || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-motiv', t);
+            } catch (e) { /* localStorage blokován -> necháme světlo */ }
+        })();
+    </script>
 </head>
 <body>
 
@@ -73,12 +87,19 @@ $casAZ = date('Y-m-d H:i');
     <div class="container">
         <a class="navbar-brand fw-bold" href="index.php">🥗 OptiMeal</a>
         <ul class="navbar-nav me-auto">
-            <li class="nav-item"><a class="nav-link" href="index.php">Generátor</a></li>
-            <li class="nav-item"><a class="nav-link" href="potraviny.php">Správa potravin</a></li>
-            <li class="nav-item"><a class="nav-link active" href="slevy.php">Správa slev</a></li>
+            <li class="nav-item"><a class="nav-link" href="index.php"><?= esc(t('nav_generator')) ?></a></li>
+            <li class="nav-item"><a class="nav-link" href="demo_dotaz.php"><?= esc(t('nav_slevy_prehled')) ?></a></li>
+            <li class="nav-item"><a class="nav-link" href="katalog.php"><?= esc(t('nav_katalog')) ?></a></li>
+            <li class="nav-item"><a class="nav-link" href="potraviny.php"><?= esc(t('nav_potraviny')) ?></a></li>
+            <li class="nav-item"><a class="nav-link active" href="slevy.php"><?= esc(t('nav_slevy')) ?></a></li>
         </ul>
-        <span class="navbar-text me-3">👤 <?= esc(prihlaseny_uzivatel()['jmeno'] ?? '') ?> (admin)</span>
-        <a href="odhlaseni.php" class="btn btn-outline-light btn-sm">Odhlásit</a>
+        <ul class="navbar-nav align-items-lg-center">
+            <li class="nav-item"><a class="nav-link px-2" href="<?= esc(jazyk_odkaz('cs')) ?>" title="Čeština" lang="cs">🇨🇿</a></li>
+            <li class="nav-item"><a class="nav-link px-2" href="<?= esc(jazyk_odkaz('en')) ?>" title="English" lang="en">🇬🇧</a></li>
+            <?php $_UI_KUS = 'tlacitko'; require __DIR__ . '/ui_nastaveni.php'; ?>
+            <li class="nav-item"><span class="navbar-text px-2">👤 <?= esc(prihlaseny_uzivatel()['jmeno'] ?? '') ?></span></li>
+            <li class="nav-item"><a class="nav-link" href="odhlaseni.php"><?= esc(t('nav_odhlasit')) ?></a></li>
+        </ul>
     </div>
 </nav>
 
@@ -189,5 +210,7 @@ $casAZ = date('Y-m-d H:i');
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="motiv.js?v=<?= (int) filemtime(__DIR__ . '/motiv.js') ?>"></script>
+<?php $_UI_KUS = 'modal'; require __DIR__ . '/ui_nastaveni.php'; ?>
 </body>
 </html>
