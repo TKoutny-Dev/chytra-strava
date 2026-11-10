@@ -1,0 +1,29 @@
+# ============================================================
+# Aktualizace slev – automatizace přes GitHub Actions
+# ------------------------------------------------------------
+# Každý StŘEDU v 03:00 Europe/Prague (= 02:00 UTC) spustí Node skript,
+# který vyřeší ochranu hostingu (anti-bot challenge) a zavolá
+# update_slevy.php – stejný scénář jako systémový CRON.
+# Manuální spuštění: záložka Actions → run workflow
+# ============================================================
+name: Aktualizace slev
+
+on:
+  schedule:
+    - cron: '0 2 * * 3'   # St 03:00 Europe/Prague (winter) / 04:00 (summer)
+  workflow_dispatch: {}    # ruční spuštění tlačítkem v GitHub UI
+
+jobs:
+  slevy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kontrola kódu
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Stáhnout a zapsat slevy
+        run: node skripty/slevy_cron.mjs
