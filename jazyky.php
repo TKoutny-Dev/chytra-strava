@@ -189,13 +189,30 @@ function LANGJS_SLOVNIKY(): array
             'katalog_chyba_site' => 'Databázi Open Food Facts se nepovedlo oslovit. Zkontrolujte připojení a zkuste to znovu.',
             'katalog_vlozit'     => '➕ Vložit do katalogu',
             'katalog_modal_nazev' => 'Vložit potravinu do katalogu',
-            'katalog_cena_label' => 'Běžná cena / 100 g (Kč)',
+            'katalog_cena_label' => 'Běžná cena / 100 g (%mena%)',
             'katalog_cena_hint'  => 'Cenu zjistěte z místního obchodu – databáze ceny neobsahuje.',
             'katalog_zdroj'      => 'Zdroj dat: <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a> (licence ODbL)',
             'katalog_pridano'    => 'Potravina %jmeno% z Open Food Facts byla uložena – už ji vidí generátor.',
             'katalog_duplicita'  => 'Potravina %jmeno% už v katalogu je.',
             'katalog_chyba_dat'  => 'Zkontrolujte hodnoty (0–100 g, kcal 0–900, cena > 0) a zkuste to znovu.',
             'katalog_nezadno'    => 'Výrobek nemá doplněné nutriční hodnoty – nelze ho uložit.',
+
+            /* --- měna (nastavení) --- */
+            'mena_nazev'      => 'Měna',
+            'mena_poznamka'   => 'Kurzy jsou statický snímek (listopad 2026). Databáze stále vede ceny v CZK – zobrazení se přepočítá na celém webu a vstupy se zpětně převedou na koruny.',
+
+            /* --- ruční zápis slev (admin) --- */
+            'slevy_pridat_nazev'   => '➕ Zapsat slevu ručně',
+            'slevy_form_nazev'     => 'Ruční zápis slevy',
+            'slevy_form_potravina' => 'Potravina',
+            'slevy_form_obchod'    => 'Obchod',
+            'slevy_form_akcni_cena' => 'Akční cena / 100 g (%mena%)',
+            'slevy_form_platnost_do' => 'Platnost do',
+            'slevy_form_vlozit'    => '💾 Uložit slevu',
+            'slevy_pridano'        => 'Sleva byla uložena – generátor ji hned začne využívat.',
+            'slevy_smazat'         => 'Smazat',
+            'slevy_smazano'        => 'Sleva byla odstraněna.',
+            'slevy_chyba_dat'      => 'Slevu se nepovedlo uložit – zkontrolujte potravinu, obchod, cenu (> 0) a datum platnosti.',
         ],
 
         'en' => [
@@ -298,7 +315,7 @@ function LANGJS_SLOVNIKY(): array
             'katalog_chyba_site' => 'Could not reach the Open Food Facts database. Check your connection and try again.',
             'katalog_vlozit'     => '➕ Add to catalog',
             'katalog_modal_nazev' => 'Add a food to the catalog',
-            'katalog_cena_label' => 'Regular price / 100 g (CZK)',
+            'katalog_cena_label' => 'Regular price / 100 g (%mena%)',
             'katalog_cena_hint'  => 'Get the price from your local store – the database contains no prices.',
             'katalog_zdroj'      => 'Data source: <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a> (ODbL licence)',
             'katalog_pridano'    => 'Food %jmeno% from Open Food Facts was saved – the planner can use it now.',
@@ -314,6 +331,23 @@ function LANGJS_SLOVNIKY(): array
             'nastaveni_tema_tma'     => 'Dark',
             'nastaveni_tema_system'  => 'System',
             'nastaveni_tema_poznamka' => '"System" automatically follows your operating system\'s appearance. Your choice is stored in the browser and applies to the whole app.',
+
+            /* --- currency (settings) --- */
+            'mena_nazev'      => 'Currency',
+            'mena_poznamka'   => 'Exchange rates are a static snapshot (Nov 2026). The database still stores prices in CZK – the display is converted across the whole site and inputs are converted back to CZK.',
+
+            /* --- manual discount entry (admin) --- */
+            'slevy_pridat_nazev'   => '➕ Enter a discount manually',
+            'slevy_form_nazev'     => 'Manual discount entry',
+            'slevy_form_potravina' => 'Food',
+            'slevy_form_obchod'    => 'Store',
+            'slevy_form_akcni_cena' => 'Sale price / 100 g (%mena%)',
+            'slevy_form_platnost_do' => 'Valid until',
+            'slevy_form_vlozit'    => '💾 Save discount',
+            'slevy_pridano'        => 'Discount saved – the planner will use it right away.',
+            'slevy_smazat'         => 'Delete',
+            'slevy_smazano'        => 'Discount removed.',
+            'slevy_chyba_dat'      => 'Could not save the discount – check the food, store, price (> 0) and validity date.',
         ],
     ];
 }

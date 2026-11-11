@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sacharidy = (float) ($_POST['sacharidy'] ?? 0);
         $tuky      = (float) ($_POST['tuky'] ?? 0);
         $kalorie   = (float) ($_POST['kalorie'] ?? 0);
-        $beznaCena = (float) ($_POST['bezna_cena'] ?? 0);
+        $beznaCena = mena_na_czk((float) ($_POST['bezna_cena'] ?? 0));
 
         // validace – pokud formulář neodpověděl správně, musíme uživateli říct přesně proč
         $ok = $nazev !== '' && mb_strlen($nazev) <= 100;
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ok = $ok && $sacharidy >= 0 && $sacharidy <= 100;
         $ok = $ok && $tuky >= 0 && $tuky <= 100;
         $ok = $ok && $kalorie >= 0 && $kalorie <= 900;
-        $ok = $ok && $beznaCena > 0 && $beznaCena <= 1000;
+        $ok = $ok && $beznaCena > 0 && $beznaCena <= 10000;
 
         if (!$ok) {
             flash('Zkontrolujte zadané údaje – název i hodnoty (0–100 g, kcal 0–900, cena > 0).', 'danger');
@@ -208,8 +208,8 @@ usort($potraviny, static fn(array $a, array $b): int => strcmp($a['nazev'], $b['
                         <td class="text-end"><?= esc(fmt((float) $p['sacharidy'])) ?></td>
                         <td class="text-end"><?= esc(fmt((float) $p['tuky'])) ?></td>
                         <td class="text-end"><?= esc(fmt((float) $p['kalorie'], 0)) ?></td>
-                        <td class="text-end"><?= esc(fmt((float) $p['bezna_cena'], 2)) ?> Kč</td>
-                        <td class="text-end fw-semibold"><?= esc(fmt((float) $p['aktualni_cena'], 2)) ?> Kč</td>
+                        <td class="text-end"><?= esc(mena_zobraz((float) $p['bezna_cena'])) ?></td>
+                        <td class="text-end fw-semibold"><?= esc(mena_zobraz((float) $p['aktualni_cena'])) ?></td>
                         <td>
                             <?php if ($p['sleva']): ?>
                                 <span class="badge bg-warning text-dark">🏷️ <?= esc((string) $p['obchod']) ?></span>
@@ -275,9 +275,10 @@ usort($potraviny, static fn(array $a, array $b): int => strcmp($a['nazev'], $b['
                            class="form-control" required value="<?= esc($upravovana['kalorie'] ?? '') ?>">
                 </div>
                 <div class="col-6 col-md-2">
-                    <label class="form-label" for="bezna_cena">Běžná cena (Kč)</label>
-                    <input type="number" step="0.01" min="0.01" max="1000" id="bezna_cena" name="bezna_cena"
-                           class="form-control" required value="<?= esc($upravovana['bezna_cena'] ?? '') ?>">
+                    <label class="form-label" for="bezna_cena">Běžná cena (<?= esc(mena_znacka()) ?>)</label>
+                    <input type="number" step="0.01" min="0.01" max="10000" id="bezna_cena" name="bezna_cena"
+                           class="form-control" required
+                           value="<?= esc(fmt((float) ($upravovana['bezna_cena'] ?? 0) / mena_kurz(), 2)) ?>">
                 </div>
                 <div class="col-12 text-end">
                     <?php if ($upravovana !== null): ?>

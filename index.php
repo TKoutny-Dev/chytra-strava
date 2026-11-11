@@ -291,7 +291,7 @@ function panelTik(int $aktualni, float $cilovy): array
                         <?php endforeach; ?>
                     </ul>
                     <div class="card-footer bg-white small">
-                        <?= esc(t('denni_cena_jidla')) ?> <strong><?= esc(fmt((float) $jidloDenne['cena'], 2)) ?> Kč</strong>
+                        <?= esc(t('denni_cena_jidla')) ?> <strong><?= esc(mena_zobraz((float) $jidloDenne['cena'])) ?></strong>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -325,18 +325,18 @@ function panelTik(int $aktualni, float $cilovy): array
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end"><?= esc(fmt((float) $polozka['gramy'], 0)) ?> g</td>
-                                <td class="text-end"><?= esc(fmt((float) $polozka['cena_za_100g'], 2)) ?> Kč</td>
+                                <td class="text-end"><?= esc(mena_zobraz((float) $polozka['cena_za_100g'])) ?></td>
                                 <td>
                                     <?= $polozka['obchod'] !== null ? esc($polozka['obchod']) : '—' ?>
                                 </td>
-                                <td class="text-end"><?= esc(fmt((float) $polozka['cena_celkem'], 2)) ?> Kč</td>
+                                <td class="text-end"><?= esc(mena_zobraz((float) $polozka['cena_celkem'])) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
                             <th colspan="4" class="text-end"><?= esc(t('celkem_den')) ?></th>
-                            <th class="text-end"><?= esc(fmt($celkovaCena, 2)) ?> Kč</th>
+                            <th class="text-end"><?= esc(mena_zobraz($celkovaCena)) ?></th>
                         </tr>
                     </tfoot>
                 </table>

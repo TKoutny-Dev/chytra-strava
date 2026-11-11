@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sacharidy = (float) ($_POST['sacharidy'] ?? 0);
     $tuky      = (float) ($_POST['tuky'] ?? 0);
     $kalorie   = (float) ($_POST['kalorie'] ?? 0);
-    $beznaCena = (float) ($_POST['bezna_cena'] ?? 0);
+    $beznaCena = mena_na_czk((float) ($_POST['bezna_cena'] ?? 0));
 
     // stejný validace rozsah jako u správy potravin (100 g se pak
     // do generátoru počítá korektně; kcal>900 = nesmysl)
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ok = $ok && $sacharidy >= 0 && $sacharidy <= 100;
     $ok = $ok && $tuky >= 0 && $tuky <= 100;
     $ok = $ok && $kalorie >= 0 && $kalorie <= 900;
-    $ok = $ok && $beznaCena > 0 && $beznaCena <= 10000;
+    $ok = $ok && $beznaCena > 0 && $beznaCena <= 100000;
 
     if (!$ok) {
         flash(t('katalog_chyba_dat'), 'danger');
@@ -201,7 +201,7 @@ $celkem = (int) $pdoP->query("SELECT COUNT(*) FROM potraviny")->fetchColumn();
                         </div>
                     </div>
                     <div class="mt-3">
-                        <label class="form-label" for="off_cena"><?= esc(t('katalog_cena_label')) ?></label>
+                        <label class="form-label" for="off_cena"><?= esc(t('katalog_cena_label', ['%mena%' => mena_znacka()])) ?></label>
                         <input type="number" id="off_cena" name="bezna_cena" class="form-control" min="0.01" max="10000" step="0.01" required value="">
                         <div class="form-text"><?= esc(t('katalog_cena_hint')) ?></div>
                     </div>

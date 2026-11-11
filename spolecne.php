@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/jazyky.php';
+require_once __DIR__ . '/mena.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -21,6 +22,8 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 // rozhodne o jazyku (podle ?lang= / session / prohlížeče) – viz jazyky.php
 aktualni_jazyk();
+// rozhodne o měně (podle ?mena= / session; základ DB zůstává CZK) – viz mena.php
+mena_aktualni();
 
 /* ============================================================
  * POMOCNÉ FUNKCE VÝSTUPU (pouští je každý soubor přes spolecne.php)

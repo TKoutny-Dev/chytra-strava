@@ -47,6 +47,28 @@ $_UI_KUS ??= 'tlacitko';
                     </button>
                 </div>
                 <p class="small text-muted mb-0 mt-3"><?= esc(t('nastaveni_tema_poznamka')) ?></p>
+
+                <hr class="my-3">
+                <h6 class="small text-uppercase text-muted mb-2"><?= esc(t('mena_nazev')) ?></h6>
+                <!-- přepínač měny – mění session přes ?mena=, ceny se přepočtou na všech stránkách -->
+                <div class="om-prepinac-tematu" role="group" aria-label="<?= esc(t('mena_nazev')) ?>">
+                    <a class="om-moznost-tematu text-decoration-none <?= mena_aktualni() === 'czk' ? 'aktivni' : '' ?>"
+                       href="<?= esc(mena_odkaz('czk')) ?>" role="button">
+                        <span class="ikona">🇨🇿</span>
+                        <span class="popisek">CZK</span>
+                    </a>
+                    <a class="om-moznost-tematu text-decoration-none <?= mena_aktualni() === 'eur' ? 'aktivni' : '' ?>"
+                       href="<?= esc(mena_odkaz('eur')) ?>" role="button">
+                        <span class="ikona">🇪🇺</span>
+                        <span class="popisek">EUR</span>
+                    </a>
+                    <a class="om-moznost-tematu text-decoration-none <?= mena_aktualni() === 'usd' ? 'aktivni' : '' ?>"
+                       href="<?= esc(mena_odkaz('usd')) ?>" role="button">
+                        <span class="ikona">🇺🇸</span>
+                        <span class="popisek">USD</span>
+                    </a>
+                </div>
+                <p class="small text-muted mb-0 mt-3"><?= esc(t('mena_poznamka')) ?></p>
             </div>
             <div class="modal-footer py-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">

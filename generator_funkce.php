@@ -141,14 +141,33 @@ function skore_potraviny(array $p, string $kategorie): float
  * 4+5) VLASTNÍ GENERÁTOR
  * ============================================================ */
 
-/** bezpečný výběr kandidáta – jednotlivá jídla se střídají,
- *  aby jídelník nebyl Stereotypní (1. jídlo = 1. kandidát, 2. jídlo = 2. kandidát...) */
-function vyber_kandidata(array $kandidati, int $poradi): ?array
+/**
+ * Výběr kandidáta s ohledem na RŮZNORODOST (2 pravidla k obhajobě):
+ *   1) FILTR POUŽITÝCH: potraviny už obsažené v dnešním jídelníčku
+ *      (přinesené přes $pouziteId) jsou odsunuty k pozadí – dřív
+ *      se spolkne ostatní nabídka, než se tatáž potravina zopakuje.
+ *   2) DENNÍ ROTACE: offset podle dne v týdnu (date('N') = 1–7)
+ *      a pořadí jídla – jídelník je jiný každý den, ale přitom
+ *      DETERMINISTICKÝ (stejný den = stejný výsledek = obhajitelno).
+ */
+function vyber_kandidata(array $kandidati, int $poradi, array $pouziteId = []): ?array
 {
     if ($kandidati === []) {
         return null;
     }
-    return $kandidati[$poradi % count($kandidati)];
+
+    // 1) preferujeme potraviny, které dnes dosud nebyly
+    $nove = array_values(array_filter(
+        $kandidati,
+        static fn(array $p): bool => !in_array((int) $p['id'], $pouziteId, true)
+    ));
+    if ($nove !== []) {
+        $kandidati = $nove;
+    }
+
+    // 2) denní rotace – pondělí ≠ úterý, snídaně ≠ oběd
+    $offset = (int) date('N') + $poradi * 2;
+    return $kandidati[$offset % count($kandidati)];
 }
 
 /** vytvoří položku jídelníčku z potraviny a počtu gramů */
@@ -177,8 +196,10 @@ function vytvor_jidlo(array $p, int $gramy): array
  *   3. doplněk tuků (jen když zbývá výraznější množství)
  * Každá porce navíc musí zůstat v limitu kcal tohoto jídla
  * – díky tomu celý den nesjede nad kalorie.
+ * Vybraná ID přibudou do pole $pouziteId => další jídla upřednostní
+ * jiné potraviny (viz vyber_kandidata()).
  */
-function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS, float $cilT, float $cilK): array
+function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS, float $cilT, float $cilK, array &$pouziteId = []): array
 {
     $jidla   = [];
     $zbyva   = [
@@ -199,9 +220,10 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
     };
 
     // --- 1. kotva (bílkovinová potravina) ---
-    $kotva = vyber_kandidata($kategorie['bilkovinova'], $poradi)
-             ?? vyber_kandidata($kategorie['sacharidova'], $poradi);
+    $kotva = vyber_kandidata($kategorie['bilkovinova'], $poradi, $pouziteId)
+             ?? vyber_kandidata($kategorie['sacharidova'], $poradi, $pouziteId);
     if ($kotva !== null && $zbyva['b'] >= 5) {
+        $pouziteId[] = (int) $kotva['id'];
         $gramy = $gramace($kotva, 'bilkoviny', $zbyva['b'], 30, 400);
 
         $jidlo = vytvor_jidlo($kotva, $gramy);
@@ -224,8 +246,9 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
     if ($nizkoproteinovi !== []) {
         $kandidatiS = $nizkoproteinovi;
     }
-    $dopln = vyber_kandidata($kandidatiS, $poradi);
+    $dopln = vyber_kandidata($kandidatiS, $poradi, $pouziteId);
     if ($dopln !== null && $zbyva['s'] >= 10 && $zbyva['k'] >= 60) {
+        $pouziteId[] = (int) $dopln['id'];
         $gramy = $gramace($dopln, 'sacharidy', $zbyva['s'], 30, 350);
 
         $jidlo = vytvor_jidlo($dopln, $gramy);
@@ -236,9 +259,10 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
         $zbyva['k'] -= $jidlo['kalorie'];
     }
 
-    // --- 3. doplněk tuků (jen když zbývá potřebu i kcal prostor) ---
-    $tukovina = vyber_kandidata($kategorie['tukova'], $poradi);
+    // --- 3. doplněk tuků (jen když zbývá potřeba i kcal prostor) ---
+    $tukovina = vyber_kandidata($kategorie['tukova'], $poradi, $pouziteId);
     if ($tukovina !== null && $zbyva['t'] >= 8 && $zbyva['k'] >= 80) {
+        $pouziteId[] = (int) $tukovina['id'];
         $gramy = $gramace($tukovina, 'tuky', $zbyva['t'], 20, 100);
 
         $jidlo = vytvor_jidlo($tukovina, $gramy);
@@ -274,10 +298,12 @@ function vygeneruj_jidelnicek(PDO $pdo, array $cile): array
         $kategorie[$k] = $seznam;
     }
 
-    // krok 2 – rozdělení cílů na jídla
+    // krok 2 – rozdělení cílů na jídla (použité ID zapustí rozmanitost
+    // – každé další jídlo upřednostní potraviny, co dnes ještě nebyly)
     $jidelnicek = [];
     $celkem = ['kalorie' => 0.0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0];
     $poradi = 0;
+    $pouziteId = [];
 
     foreach (PODILY_JIDEL as $nazevJidla => $podil) {
         $jidla = naplanuj_jidlo(
@@ -286,7 +312,8 @@ function vygeneruj_jidelnicek(PDO $pdo, array $cile): array
             (float) $cile['bilkoviny'] * $podil,
             (float) $cile['sacharidy'] * $podil,
             (float) $cile['tuky'] * $podil,
-            (float) $cile['kalorie'] * $podil
+            (float) $cile['kalorie'] * $podil,
+            $pouziteId
         );
 
         $souhrn = ['kalorie' => 0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0];

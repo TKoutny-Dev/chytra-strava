@@ -5,11 +5,11 @@ declare(strict_types=1);
  * slevy.php – správa slev pro administrátory
  * ---------------------------------------------------------------
  * - seznam aktuálních slev (LEFT JOIN, platnost_do >= CURDATE())
+ * - RUČNÍ ZÁPIS SLEVY – admin má hned vidět slevu v generátoru
+ *   (formulář počítá s aktivní měnou – vstup převedeme na CZK)
+ * - MAZÁNÍ SLEV – každý řádek tabulky má tlačítko Smazat
  * - tlačítko „Načíst ukázkové slevy" – demo dataset bez nutnosti sítě
- *   (dle zadání: pro spolehlivou prezentaci na obhajobě)
- * - tlačítko „Spustit stahování ručně" – spustí tentýž kód, který
- *   v produkci oběhá CRON (update_slevy.php) – vidíte výsledek ihned
- * - návod na nastavení CRON (webový i systémový)
+ * - tlačítko „Spustit stahování ručně" – tentýž kód, který oběhá CRON
  */
 
 require_once __DIR__ . '/spolecne.php';
@@ -33,13 +33,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $akce = $_POST['akce'] ?? '';
+    $pdo_ = getPDO();
 
     if ($akce === 'ukazkove') {
         // DEMO podle zadání: bez sítě, garantovaný výsledek
-        flash(nacti_ukazkove_slevy(getPDO()));
+        flash(nacti_ukazkove_slevy($pdo_));
     } elseif ($akce === 'stahnout') {
         // ruční spuštění téhož kódu, který běží přes CRON
-        flash(spustit_stahovani_slev(getPDO()));
+        flash(spustit_stahovani_slev($pdo_));
+    } elseif ($akce === 'pridat_slevu') {
+        // ---------- RUČNÍ ZÁPIS SLEVY ----------
+        $idPotraviny = ctype_digit((string) ($_POST['id_potraviny'] ?? '')) ? (int) $_POST['id_potraviny'] : 0;
+        $obchod      = trim((string) ($_POST['obchod'] ?? ''));
+        // akční cena přijde v AKTIVNÍ MĚNĚ – přepočteme na CZK (základ DB)
+        $akcniCena   = mena_na_czk((float) ($_POST['akcni_cena'] ?? 0));
+        $platnostDo  = trim((string) ($_POST['platnost_do'] ?? ''));
+
+        $ok = $idPotraviny > 0
+            && $obchod !== '' && mb_strlen($obchod) <= 60
+            && $akcniCena > 0 && $akcniCena <= 100000
+            && (bool) preg_match('~^\d{4}-\d{2}-\d{2}$~', $platnostDo)
+            && $platnostDo >= date('Y-m-d');
+
+        if (!$ok) {
+            flash(t('slevy_chyba_dat'), 'danger');
+        } else {
+            try {
+                // potravina musí existovat (pojistka proti cizímu ID)
+                $kontrola = $pdo_->prepare("SELECT COUNT(*) FROM potraviny WHERE id = :id");
+                $kontrola->execute(['id' => $idPotraviny]);
+                if ((int) $kontrola->fetchColumn() === 0) {
+                    flash(t('slevy_chyba_dat'), 'danger');
+                } else {
+                    uloz_slevu($pdo_, $idPotraviny, $obchod, $akcniCena, $platnostDo);
+                    flash(t('slevy_pridano'));
+                }
+            } catch (PDOException $e) {
+                error_log('Chyba při ručním zápisu slevy: ' . $e->getMessage());
+                flash(t('slevy_chyba_dat'), 'danger');
+            }
+        }
+    } elseif ($akce === 'smazat_slevu') {
+        // ---------- MAZÁNÍ SLEVY ----------
+        $idPotraviny = ctype_digit((string) ($_POST['id_potraviny'] ?? '')) ? (int) $_POST['id_potraviny'] : 0;
+        $obchod      = trim((string) ($_POST['obchod'] ?? ''));
+
+        if ($idPotraviny > 0 && $obchod !== '') {
+            $mazani = $pdo_->prepare(
+                "DELETE FROM akce_obchody WHERE id_potraviny = :id AND obchod = :obchod"
+            );
+            $mazani->execute(['id' => $idPotraviny, 'obchod' => $obchod]);
+            flash($mazani->rowCount() > 0 ? t('slevy_smazano') : t('slevy_chyba_dat'), $mazani->rowCount() > 0 ? 'success' : 'danger');
+        } else {
+            flash(t('slevy_chyba_dat'), 'danger');
+        }
     }
 
     header('Location: slevy.php');
@@ -49,17 +96,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ==================== VÝPIS AKTUÁLNÍCH SLEV ==================== */
 $pdo = getPDO();
 $aktualniSlevy = $pdo->query(
-    "SELECT p.nazev, a.obchod, a.akcni_cena, a.platnost_do, p.bezna_cena
+    "SELECT a.id_potraviny, a.obchod, a.akcni_cena, a.platnost_do, p.nazev, p.bezna_cena
      FROM akce_obchody AS a
      JOIN potraviny AS p ON p.id = a.id_potraviny
      WHERE a.platnost_do >= CURDATE()
      ORDER BY a.obchod, p.nazev"
 )->fetchAll();
 
+$seznamPotravin = $pdo->query("SELECT id, nazev FROM potraviny ORDER BY nazev")->fetchAll();
+
 $casAZ = date('Y-m-d H:i');
 ?>
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="<?= esc(aktualni_jazyk()) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -86,47 +135,90 @@ $casAZ = date('Y-m-d H:i');
 <nav class="navbar navbar-expand-lg navbar-dark bg-success no-tisk">
     <div class="container">
         <a class="navbar-brand fw-bold" href="index.php">🥗 OptiMeal</a>
-        <ul class="navbar-nav me-auto">
-            <li class="nav-item"><a class="nav-link" href="index.php"><?= esc(t('nav_generator')) ?></a></li>
-            <li class="nav-item"><a class="nav-link" href="demo_dotaz.php"><?= esc(t('nav_slevy_prehled')) ?></a></li>
-            <li class="nav-item"><a class="nav-link" href="katalog.php"><?= esc(t('nav_katalog')) ?></a></li>
-            <li class="nav-item"><a class="nav-link" href="potraviny.php"><?= esc(t('nav_potraviny')) ?></a></li>
-            <li class="nav-item"><a class="nav-link active" href="slevy.php"><?= esc(t('nav_slevy')) ?></a></li>
-        </ul>
-        <ul class="navbar-nav align-items-lg-center">
-            <li class="nav-item"><a class="nav-link px-2" href="<?= esc(jazyk_odkaz('cs')) ?>" title="Čeština" lang="cs">🇨🇿</a></li>
-            <li class="nav-item"><a class="nav-link px-2" href="<?= esc(jazyk_odkaz('en')) ?>" title="English" lang="en">🇬🇧</a></li>
-            <?php $_UI_KUS = 'tlacitko'; require __DIR__ . '/ui_nastaveni.php'; ?>
-            <li class="nav-item"><span class="navbar-text px-2">👤 <?= esc(prihlaseny_uzivatel()['jmeno'] ?? '') ?></span></li>
-            <li class="nav-item"><a class="nav-link" href="odhlaseni.php"><?= esc(t('nav_odhlasit')) ?></a></li>
-        </ul>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="menu">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="index.php"><?= esc(t('nav_generator')) ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="demo_dotaz.php"><?= esc(t('nav_slevy_prehled')) ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="katalog.php"><?= esc(t('nav_katalog')) ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="potraviny.php"><?= esc(t('nav_potraviny')) ?></a></li>
+                <li class="nav-item"><a class="nav-link active" href="slevy.php"><?= esc(t('nav_slevy')) ?></a></li>
+            </ul>
+            <ul class="navbar-nav align-items-lg-center">
+                <li class="nav-item"><a class="nav-link px-2" href="<?= esc(jazyk_odkaz('cs')) ?>" title="Čeština" lang="cs">🇨🇿</a></li>
+                <li class="nav-item"><a class="nav-link px-2" href="<?= esc(jazyk_odkaz('en')) ?>" title="English" lang="en">🇬🇧</a></li>
+                <?php $_UI_KUS = 'tlacitko'; require __DIR__ . '/ui_nastaveni.php'; ?>
+                <li class="nav-item"><span class="navbar-text px-2">👤 <?= esc(prihlaseny_uzivatel()['jmeno'] ?? '') ?></span></li>
+                <li class="nav-item"><a class="nav-link" href="odhlaseni.php"><?= esc(t('nav_odhlasit')) ?></a></li>
+            </ul>
+        </div>
     </div>
 </nav>
 
 <main class="container my-4">
     <?= zobraz_flash() ?>
 
-    <h1 class="h4 mb-1">🏷️ Automatizace slev</h1>
+    <h1 class="h4 mb-1">🏷️ <?= esc(t('nav_slevy')) ?></h1>
     <p class="text-muted">
-        Slevy se automaticky stahují z digitálních letáků skriptem
-        <code>update_slevy.php</code> (cURL + DOMDocument, spouštěný CRONem),
-        rozparsují se a párují na katalog potravin.
+        <?= esc(aktualni_jazyk() === 'cs'
+            ? 'Slevy se automaticky stahují z digitálních letáků skriptem update_slevy.php (GitHub Actions CRON), rozparsují se a párují na katalog potravin.'
+            : 'Discounts are automatically pulled from digital leaflets by update_slevy.php (GitHub Actions CRON), parsed and matched against the food catalog.') ?>
     </p>
+
+    <!-- ==================== RUČNÍ ZÁPIS SLEVY ==================== -->
+    <div class="card shadow-sm mb-4 no-tisk">
+        <div class="card-header bg-white"><strong><?= esc(t('slevy_pridat_nazev')) ?></strong></div>
+        <div class="card-body">
+            <form method="post" action="slevy.php" class="row g-2 align-items-end">
+                <?= csrf_pole() ?>
+                <input type="hidden" name="akce" value="pridat_slevu">
+                <div class="col-12 col-md-3">
+                    <label class="form-label small" for="s_id_potraviny"><?= esc(t('slevy_form_potravina')) ?></label>
+                    <select id="s_id_potraviny" name="id_potraviny" class="form-select" required>
+                        <?php foreach ($seznamPotravin as $potravina): ?>
+                            <option value="<?= (int) $potravina['id'] ?>"><?= esc($potravina['nazev']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small" for="s_obchod"><?= esc(t('slevy_form_obchod')) ?></label>
+                    <input type="text" id="s_obchod" name="obchod" class="form-control" maxlength="60" required
+                           placeholder="Billa / Tesco / …">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small" for="s_cena"><?= esc(t('slevy_form_akcni_cena', ['%mena%' => mena_znacka()])) ?></label>
+                    <input type="number" id="s_cena" name="akcni_cena" class="form-control" step="0.01" min="0.01"
+                           max="10000" required>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small" for="s_platnost"><?= esc(t('slevy_form_platnost_do')) ?></label>
+                    <input type="date" id="s_platnost" name="platnost_do" class="form-control" required
+                           value="<?= esc(date('Y-m-d', strtotime('+14 days'))) ?>">
+                </div>
+                <div class="col-6 col-md-3">
+                    <button type="submit" class="btn btn-success w-100"><?= esc(t('slevy_form_vlozit')) ?></button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- ==================== AKTIVACE ==================== -->
     <div class="row g-3 mb-4">
         <div class="col-md-6">
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
-                    <h2 class="h6">🧪 Naplnit ukázkovými slevami</h2>
+                    <h2 class="h6">🧪 <?= esc(aktualni_jazyk() === 'cs' ? 'Naplnit ukázkovými slevami' : 'Load sample discounts') ?></h2>
                     <p class="small text-muted mb-2">
-                        Vloží pevný demo dataset (10 slev, platnost 30 dní) –
-                        doporučeno před obhajobou, garantovaný stav bez sítě.
+                        <?= esc(aktualni_jazyk() === 'cs'
+                            ? 'Vloží pevný demo dataset (10 slev, platnost 30 dní) – doporučeno před obhajobou, garantovaný stav bez sítě.'
+                            : 'Inserts a fixed demo dataset (10 discounts, valid 30 days) – recommended before your defense, guaranteed state without network.') ?>
                     </p>
                     <form method="post" action="slevy.php">
                         <?= csrf_pole() ?>
                         <input type="hidden" name="akce" value="ukazkove">
-                        <button type="submit" class="btn btn-success">Načíst ukázkové slevy</button>
+                        <button type="submit" class="btn btn-success"><?= esc(aktualni_jazyk() === 'cs' ? 'Načíst ukázkové slevy' : 'Load sample discounts') ?></button>
                     </form>
                 </div>
             </div>
@@ -134,50 +226,38 @@ $casAZ = date('Y-m-d H:i');
         <div class="col-md-6">
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
-                    <h2 class="h6">🕷️ Spustit stahování ručně</h2>
+                    <h2 class="h6">🕷️ <?= esc(aktualni_jazyk() === 'cs' ? 'Spustit stahování ručně' : 'Run scraping manually') ?></h2>
                     <p class="small text-muted mb-2">
-                        Zavolá tentýž kód, který v produkci běží z CRONu
-                        (cURL + DOMDocument + párování). U nás teď ukázkový letak
-                        <code>letak_ukazka.html</code>.
+                        <?= esc(aktualni_jazyk() === 'cs'
+                            ? 'Zavolá tentýž kód, který v produkci běží z CRONu (cURL + DOMDocument + párování).'
+                            : 'Calls the same code that runs from CRON in production (cURL + DOMDocument + matching).') ?>
                     </p>
                     <form method="post" action="slevy.php">
                         <?= csrf_pole() ?>
                         <input type="hidden" name="akce" value="stahnout">
-                        <button type="submit" class="btn btn-outline-success">Spustit stahování</button>
+                        <button type="submit" class="btn btn-outline-success"><?= esc(aktualni_jazyk() === 'cs' ? 'Spustit stahování' : 'Run scraping') ?></button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ==================== NASTAVENÍ CRON ==================== -->
-    <div class="card shadow-sm mb-5">
-        <div class="card-header bg-white"><strong>⚙️ Automatizace – každý středu v 03:00</strong></div>
-        <div class="card-body small">
-            <ol class="mb-0">
-                <li><strong>Systémový CRON</strong> na hostingu:
-                    <code>0 3 * * 3 php <?= esc(__DIR__) ?>/update_slevy.php</code></li>
-                <li><strong>Webcron zdarma (cron-job.org)</strong> bez systémového CRONu:
-                    <code>https://optimeal.site.je/update_slevy.php?token=slevy_cron_2026</code>
-                    &ndash; Nastavte: „jakýkoli den ve středu", 03:00.</li>
-                <li>Kontrola: soubor <code>aktualizace_slev.log</code> obsahuje historii běhů.</li>
-            </ol>
-        </div>
-    </div>
-
     <!-- ==================== TABULKA SLEV ==================== -->
-    <h2 class="h4 mb-2">Aktuální slevy (<?= count($aktualniSlevy) ?>)</h2>
+    <h2 class="h4 mb-2">
+        <?= esc(aktualni_jazyk() === 'cs' ? 'Aktuální slevy' : 'Current discounts') ?> (<?= esc(fmt((float) count($aktualniSlevy), 0)) ?>)
+    </h2>
     <div class="card shadow-sm mb-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Potravina</th>
-                        <th>Obchod</th>
-                        <th class="text-end">Akční cena / 100 g</th>
-                        <th class="text-end">Běžná cena</th>
-                        <th class="text-end">Úspora</th>
-                        <th class="text-end">Platnost do</th>
+                        <th><?= esc(t('th_potravina')) ?></th>
+                        <th><?= esc(t('th_obchod')) ?></th>
+                        <th class="text-end"><?= esc(aktualni_jazyk() === 'cs' ? 'Akční cena / 100 g' : 'Sale price / 100 g') ?></th>
+                        <th class="text-end"><?= esc(aktualni_jazyk() === 'cs' ? 'Běžná cena' : 'Regular price') ?></th>
+                        <th class="text-end"><?= esc(aktualni_jazyk() === 'cs' ? 'Úspora' : 'Saving') ?></th>
+                        <th class="text-end"><?= esc(t('slevy_form_platnost_do')) ?></th>
+                        <th class="no-tisk"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -187,21 +267,34 @@ $casAZ = date('Y-m-d H:i');
                     <tr>
                         <td class="fw-semibold"><?= esc($s['nazev']) ?></td>
                         <td><span class="badge bg-warning text-dark"><?= esc($s['obchod']) ?></span></td>
-                        <td class="text-end"><?= esc(fmt((float) $s['akcni_cena'], 2)) ?> Kč</td>
-                        <td class="text-end text-muted"><?= esc(fmt((float) $s['bezna_cena'], 2)) ?> Kč</td>
-                        <td class="text-end text-success fw-semibold"><?= esc(fmt($uspora, 2)) ?> Kč</td>
+                        <td class="text-end"><?= esc(mena_zobraz((float) $s['akcni_cena'])) ?></td>
+                        <td class="text-end text-muted"><?= esc(mena_zobraz((float) $s['bezna_cena'])) ?></td>
+                        <td class="text-end text-success fw-semibold"><?= esc(mena_zobraz($uspora)) ?></td>
                         <td class="text-end"><?= esc((string) $s['platnost_do']) ?></td>
+                        <td class="no-tisk text-end">
+                            <!-- mazání: id_potraviny + obchod = unikátní klíč slevy -->
+                            <form method="post" action="slevy.php" onsubmit="return confirm('<?= esc(aktualni_jazyk() === 'cs' ? 'Opravdu smazat tuto slevu?' : 'Really delete this discount?') ?>');">
+                                <?= csrf_pole() ?>
+                                <input type="hidden" name="akce" value="smazat_slevu">
+                                <input type="hidden" name="id_potraviny" value="<?= (int) $s['id_potraviny'] ?>">
+                                <input type="hidden" name="obchod" value="<?= esc($s['obchod']) ?>">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">🗑️ <?= esc(t('slevy_smazat')) ?></button>
+                            </form>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                     <?php if ($aktualniSlevy === []): ?>
-                    <tr><td colspan="6" class="text-center text-muted py-4">Žádné aktuální slevy – naplňte je tlačítkem výše.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">
+                        <?= esc(aktualni_jazyk() === 'cs' ? 'Žádné aktuální slevy – napište je ručně nebo načtěte ukázku.' : 'No current discounts – enter one manually or load the sample.') ?>
+                    </td></tr>
                     <?php endif; ?>
                 </tbody>
                 <tfoot class="table-light">
                     <tr>
-                        <th colspan="4" class="text-end">Celková úspora za 100 g dohromady:</th>
-                        <th class="text-end"><?= esc(fmt($celkemUspor, 2)) ?> Kč</th>
+                        <th colspan="4" class="text-end"><?= esc(aktualni_jazyk() === 'cs' ? 'Celková úspora za 100 g dohromady:' : 'Total saving per 100 g combined:') ?></th>
+                        <th class="text-end"><?= esc(mena_zobraz($celkemUspor)) ?></th>
                         <th></th>
+                        <th class="no-tisk"></th>
                     </tr>
                 </tfoot>
             </table>
