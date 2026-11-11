@@ -1,0 +1,48 @@
+# ============================================================
+# Aktualizace kurzů měn – automatizace přes GitHub Actions
+# ------------------------------------------------------------
+# Každý DEN v 03:10 UTC stáhne aktuální kurzy ECB (frankfurter.dev),
+# přepíše mena.php, commitne změnu a pošle soubor na hosting FTP.
+# Secrety repo nastavení: FTP_USER, FTP_PASS (účet if0_43397803).
+# Manuální spuštění: záložka Actions → run workflow
+# ============================================================
+name: Aktualizace kurzů
+
+on:
+  schedule:
+    - cron: '10 3 * * *'   # denně 03:10 UTC = 04:10 Europe/Prague (zima)
+  workflow_dispatch: {}    # ruční spuštění tlačítkem v GitHub UI
+
+permissions:
+  contents: write          # workflow smí commitovat do repozitáře
+
+jobs:
+  kurzy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kontrola kódu
+        uses: actions/checkout@v4
+
+      - name: Stáhnout aktuální kurzy a přepsat mena.php
+        run: php skripty/aktualizuj_kurzy.php
+
+      - name: Commitnout změnu (jestli se něco změnilo)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet mena.php; then
+            echo "Kurzy beze změny – nic necommituji."
+          else
+            git add mena.php
+            git commit -m "Kurzy měn dle ECB (automat)"
+            git push
+          fi
+
+      - name: Nahrát mena.php na hosting
+        env:
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+        run: |
+          curl --ssl-reqd --ftp-pasv --max-time 60 \
+               -u "$FTP_USER:$FTP_PASS" \
+               -T mena.php "ftp://ftpupload.net/htdocs/mena.php"

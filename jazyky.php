@@ -199,7 +199,7 @@ function LANGJS_SLOVNIKY(): array
 
             /* --- měna (nastavení) --- */
             'mena_nazev'      => 'Měna',
-            'mena_poznamka'   => 'Kurzy jsou statický snímek (listopad 2026). Databáze stále vede ceny v CZK – zobrazení se přepočítá na celém webu a vstupy se zpětně převedou na koruny.',
+            'mena_poznamka'   => 'Kurzy se denně aktualizují dle ECB (automaticky přes GitHub Actions). Databáze stále vede ceny v CZK – zobrazení se přepočítá na celém webu a vstupy se zpětně převedou na koruny.',
 
             /* --- ruční zápis slev (admin) --- */
             'slevy_pridat_nazev'   => '➕ Zapsat slevu ručně',
@@ -334,7 +334,7 @@ function LANGJS_SLOVNIKY(): array
 
             /* --- currency (settings) --- */
             'mena_nazev'      => 'Currency',
-            'mena_poznamka'   => 'Exchange rates are a static snapshot (Nov 2026). The database still stores prices in CZK – the display is converted across the whole site and inputs are converted back to CZK.',
+            'mena_poznamka'   => 'Exchange rates are updated daily from ECB rates (automatically via GitHub Actions). The database still stores prices in CZK – the display is converted across the whole site and inputs are converted back to CZK.',
 
             /* --- manual discount entry (admin) --- */
             'slevy_pridat_nazev'   => '➕ Enter a discount manually',

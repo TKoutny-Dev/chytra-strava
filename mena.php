@@ -10,20 +10,18 @@ declare(strict_types=1);
  *   - Zobrazení převádí podle právě zvolené měny uživatele (session).
  *   - VSTUP Z FORMULÁŘŮ: uživatel zadává ve své měně; skript hodnotu
  *     vynásobí kurzem a uloží zpět v CZK. (Sjednocené rozhraní.)
- *   - KURZY jsou statický snímek uvedený níže s datem. Pravidelný
- *     denní upload kurzů přes CRON/GitHub Actions je připravený
- *     scénář pro další rozvoj – stačí přepsat hodnoty v tomto
- *     souboru z automatizace, další změny v kódu nejsou potřeba.
+ *   - KURZY se denně aktualizují skriptem skripty/aktualizuj_kurzy.php,
+ *     který běží z GitHub Actions (workflow aktualizace_kurzu.yml).
  */
 
-/** Seznam podporovaných měn: kod => [znacka, kuru k CZK, pocet desetinnych mist] */
+/** Seznam podporovaných měn: kod => [znacka, kurz k CZK, pocet desetinnych mist] */
 function mena_seznam(): array
 {
     return [
-        // snímek kurzů z listopadu 2026 (automatizovaná aktualizace v další verzi)
+        // snímek kurzů ECB z 11. listopadu 2026
         'czk' => ['znacka' => 'Kč', 'kurz' => 1.00,  'desetinna' => 2],
-        'eur' => ['znacka' => '€',  'kurz' => 25.05, 'desetinna' => 2],
-        'usd' => ['znacka' => '$',  'kurz' => 23.10, 'desetinna' => 2],
+        'eur' => ['znacka' => '€',  'kurz' => 24.38, 'desetinna' => 2],
+        'usd' => ['znacka' => '$',  'kurz' => 21.91, 'desetinna' => 2],
     ];
 }
 
@@ -77,7 +75,7 @@ function mena_zobraz(float $cenaCzk, ?string $kod = null): string
 
 /**
  * Hodnota ze vstupního formuláře (zadaná v aktivní měně) -> CZK (základ
- * databáze). Např. 1,00 € -> 25,05 Kč. Pro CZK se kurz rovná 1.
+ * databáze). Např. 1,00 € -> 24,38 Kč. Pro CZK se kurz rovná 1.
  */
 function mena_na_czk(float $hodnotaVMenate): float
 {
