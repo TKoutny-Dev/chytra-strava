@@ -331,7 +331,9 @@ if ($generovat && $tydenniRezim) {
         <div class="alert alert-info no-tisk">
             <?= t('prazdno_zprava') /* obsahuje vlastní <strong> – vědomě bez esc */ ?>
         </div>
-    <?php else: ?>
+    <?php endif; ?>
+
+    <?php if ($jidelnicekVysledek !== null): ?>
         <?php $celkem = $jidelnicekVysledek['celkem']; ?>
 
         <!-- ====================== SOUHRN CÍLŮ ====================== -->
