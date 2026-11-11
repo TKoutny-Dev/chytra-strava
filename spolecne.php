@@ -20,6 +20,19 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+/* ---------- bezpečnostní hlavičky (posílají se u KAŽDÉ strany) ----------
+ * X-Frame-Options     – stránku nelze zahrnout do cizího <iframe>
+ *                       (ochrana proti clickjacking)
+ * X-Content-Type-Options – prohlížeč nesmí "hádat" typ souboru (MIME sniffing)
+ * Referrer-Policy     – cizím webům neprozděláváme celé URL (v něm
+ *                       bývá session id apod.)
+ */
+if (!headers_sent()) {
+    header('X-Frame-Options: DENY');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+}
+
 // rozhodne o jazyku (podle ?lang= / session / prohlížeče) – viz jazyky.php
 aktualni_jazyk();
 // rozhodne o měně (podle ?mena= / session; základ DB zůstává CZK) – viz mena.php

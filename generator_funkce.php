@@ -205,6 +205,8 @@ function vytvor_jidlo(array $p, int $gramy): array
         'sacharidy' => round((float) $p['sacharidy'] * $koeficient, 1),
         'tuky'      => round((float) $p['tuky'] * $koeficient, 1),
         'cena'      => round((float) $p['aktualni_cena'] * $koeficient, 2),
+        // cena bez slevy – díky ní počítáme, KOLIK sleva ušetřila
+        'cena_bezna' => round((float) ($p['bezna_cena'] ?? $p['aktualni_cena']) * $koeficient, 2),
         'obchod'    => $p['sleva'] ? $p['obchod'] : null,
         'sleva'     => (bool) $p['sleva'],
     ];
@@ -322,7 +324,7 @@ function vygeneruj_jidelnicek(PDO $pdo, array $cile, ?int $denniPosun = null, fl
     // krok 2 – rozdělení cílů na jídla (použité ID zapustí rozmanitost
     // – každé další jídlo upřednostní potraviny, co dnes ještě nebyly)
     $jidelnicek = [];
-    $celkem = ['kalorie' => 0.0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0];
+    $celkem = ['kalorie' => 0.0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0, 'cena_bezna' => 0.0];
     $poradi = 0;
     $pouziteId = [];
 
@@ -339,13 +341,15 @@ function vygeneruj_jidelnicek(PDO $pdo, array $cile, ?int $denniPosun = null, fl
             $poolMin
         );
 
-        $souhrn = ['kalorie' => 0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0];
+        $souhrn = ['kalorie' => 0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0, 'cena_bezna' => 0.0];
         foreach ($jidla as $jidlo) {
             $souhrn['kalorie']   += $jidlo['kalorie'];
             $souhrn['bilkoviny'] += $jidlo['bilkoviny'];
             $souhrn['sacharidy'] += $jidlo['sacharidy'];
             $souhrn['tuky']      += $jidlo['tuky'];
             $souhrn['cena']      += $jidlo['cena'];
+            // staré uložené plány (JSON) pole nemají – pak 0 úspora
+            $souhrn['cena_bezna'] += $jidlo['cena_bezna'] ?? $jidlo['cena'];
         }
 
         $jidelnicek[$nazevJidla] = ['jidla' => $jidla] + $souhrn;
@@ -355,6 +359,7 @@ function vygeneruj_jidelnicek(PDO $pdo, array $cile, ?int $denniPosun = null, fl
         $celkem['sacharidy'] += $souhrn['sacharidy'];
         $celkem['tuky']      += $souhrn['tuky'];
         $celkem['cena']      += $souhrn['cena'];
+        $celkem['cena_bezna'] += $souhrn['cena_bezna'];
 
         $poradi++;
     }
@@ -386,6 +391,11 @@ function sestav_nakupni_seznam(array $jidelnicek): array
                     'cena_za_100g' => $jidlo['gramy'] > 0
                         ? round($jidlo['cena'] * 100 / $jidlo['gramy'], 2)
                         : 0.0,
+                    // cena bez slevy (pro výpočet úspory); staré JSON plány
+                    // pole nemají – pak je položka bez úspory
+                    'cena_bezna_za_100g' => $jidlo['gramy'] > 0 && isset($jidlo['cena_bezna'])
+                        ? round($jidlo['cena_bezna'] * 100 / $jidlo['gramy'], 2)
+                        : null,
                     'obchod'       => $jidlo['obchod'],
                     'sleva'        => $jidlo['sleva'],
                 ];
@@ -396,6 +406,10 @@ function sestav_nakupni_seznam(array $jidelnicek): array
 
     foreach ($seznam as $id => $polozka) {
         $seznam[$id]['cena_celkem'] = round($polozka['gramy'] * $polozka['cena_za_100g'] / 100, 2);
+        // úspora díky slevě: cena bez slevy − cena se slevou (min 0)
+        $seznam[$id]['usetreno'] = $polozka['cena_bezna_za_100g'] !== null
+            ? max(0.0, round($polozka['gramy'] * ($polozka['cena_bezna_za_100g'] - $polozka['cena_za_100g']) / 100, 2))
+            : 0.0;
     }
 
     // seřadíme od nejdražší položky (hlavní nákup nahoře)
@@ -449,7 +463,7 @@ function panelTik(int $aktualni, float $cilovy): array
 function vygeneruj_tydenni_plan(PDO $pdo, array $cile): array
 {
     $dny = [];
-    $tyden = ['kalorie' => 0.0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0];
+    $tyden = ['kalorie' => 0.0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0, 'cena_bezna' => 0.0];
     $spojenyJidelnicek = [];   // klíč „den-jídlo", aby se dny nesloučily
 
     for ($den = 1; $den <= 7; $den++) {
@@ -461,6 +475,7 @@ function vygeneruj_tydenni_plan(PDO $pdo, array $cile): array
         $tyden['sacharidy'] += $vysledek['celkem']['sacharidy'];
         $tyden['tuky']      += $vysledek['celkem']['tuky'];
         $tyden['cena']      += $vysledek['celkem']['cena'];
+        $tyden['cena_bezna'] += $vysledek['celkem']['cena_bezna'] ?? $vysledek['celkem']['cena'];
 
         // spojíme jídla všech dnů pro společný nákupní seznam
         foreach ($vysledek['jidelnicek'] as $nazevJidla => $jidloDenne) {

@@ -11,7 +11,19 @@
  */
 
 $nakupSoucetPopisek = $nakupSoucetPopisek ?? t('celkem_den');
+
+/* celková úspora díky slevám (součet položek) */
+$nakupUsetreno = 0.0;
+foreach ($nakupPolozky as $nakupPolozka) {
+    $nakupUsetreno += (float) ($nakupPolozka['usetreno'] ?? 0.0);
+}
+$nakupUsetreno = round($nakupUsetreno, 2);
 ?>
+<?php if ($nakupUsetreno > 0.0): ?>
+    <div class="alert alert-success py-2 text-center karta-tisk mb-2">
+        <?= esc(t('nakup_usetreno', ['%castka%' => mena_zobraz($nakupUsetreno)])) ?>
+    </div>
+<?php endif; ?>
 <div class="card shadow-sm mb-2 karta-tisk">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -21,6 +33,7 @@ $nakupSoucetPopisek = $nakupSoucetPopisek ?? t('celkem_den');
                     <th class="text-end"><?= esc(t('th_mnozstvi')) ?></th>
                     <th class="text-end"><?= esc(t('th_cena_100g')) ?></th>
                     <th><?= esc(t('th_obchod')) ?></th>
+                    <th class="text-end"><?= esc(t('th_usetreno')) ?></th>
                     <th class="text-end"><?= esc(t('th_cena_celkem')) ?></th>
                 </tr>
             </thead>
@@ -40,13 +53,23 @@ $nakupSoucetPopisek = $nakupSoucetPopisek ?? t('celkem_den');
                         <td>
                             <?= $polozka['obchod'] !== null ? esc($polozka['obchod']) : '—' ?>
                         </td>
+                        <td class="text-end text-success-emphasis">
+                            <?= (float) ($polozka['usetreno'] ?? 0.0) > 0.0
+                                ? '−' . esc(mena_zobraz((float) $polozka['usetreno']))
+                                : '—' ?>
+                        </td>
                         <td class="text-end"><?= esc(mena_zobraz((float) $polozka['cena_celkem'])) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
             <tfoot class="table-light">
                 <tr>
-                    <th colspan="4" class="text-end"><?= esc($nakupSoucetPopisek) ?></th>
+                    <?php if ($nakupUsetreno > 0.0): ?>
+                        <th colspan="3" class="text-end"><?= esc(t('nakup_usetreno_kratce')) ?> <strong class="text-success-emphasis">−<?= esc(mena_zobraz($nakupUsetreno)) ?></strong></th>
+                        <th class="text-end" colspan="2"></th>
+                    <?php else: ?>
+                        <th colspan="5" class="text-end"><?= esc($nakupSoucetPopisek) ?></th>
+                    <?php endif; ?>
                     <th class="text-end"><?= esc(mena_zobraz($nakupCelkovaCena)) ?></th>
                 </tr>
             </tfoot>

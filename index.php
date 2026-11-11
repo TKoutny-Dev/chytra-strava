@@ -416,47 +416,11 @@ if ($generovat && $tydenniRezim) {
 
         <!-- ====================== NÁKUPNÍ SEZNAM ====================== -->
         <h2 class="h4 mb-3"><?= esc(t('nakup_nadpis')) ?></h2>
-        <div class="card shadow-sm mb-2 karta-tisk">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th><?= esc(t('th_potravina')) ?></th>
-                            <th class="text-end"><?= esc(t('th_mnozstvi')) ?></th>
-                            <th class="text-end"><?= esc(t('th_cena_100g')) ?></th>
-                            <th><?= esc(t('th_obchod')) ?></th>
-                            <th class="text-end"><?= esc(t('th_cena_celkem')) ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php $celkovaCena = 0.0; ?>
-                        <?php foreach ($nakupniSeznam as $polozka): ?>
-                            <?php $celkovaCena += (float) $polozka['cena_celkem']; ?>
-                            <tr>
-                                <td>
-                                    <?= esc($polozka['nazev']) ?>
-                                    <?php if ($polozka['sleva']): ?>
-                                        <span class="badge bg-warning text-dark ms-1"><?= esc(t('sleva_kratky')) ?></span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="text-end"><?= esc(fmt((float) $polozka['gramy'], 0)) ?> g</td>
-                                <td class="text-end"><?= esc(mena_zobraz((float) $polozka['cena_za_100g'])) ?></td>
-                                <td>
-                                    <?= $polozka['obchod'] !== null ? esc($polozka['obchod']) : '—' ?>
-                                </td>
-                                <td class="text-end"><?= esc(mena_zobraz((float) $polozka['cena_celkem'])) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <th colspan="4" class="text-end"><?= esc(t('celkem_den')) ?></th>
-                            <th class="text-end"><?= esc(mena_zobraz($celkovaCena)) ?></th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
+        <?php
+        $nakupPolozky = $nakupniSeznam;
+        $nakupSoucetPopisek = t('celkem_den');
+        require __DIR__ . '/nakup_tabulka.php';
+        ?>
         <div class="d-flex justify-content-between align-items-center mb-5 no-tisk">
             <span class="text-muted small">
                 <?= t('poznamka_obchody') /* obsahuje vlastní <strong>/<em> – vědomě bez esc */ ?>
@@ -577,47 +541,11 @@ if ($generovat && $tydenniRezim) {
 
         <!-- společný nákupní seznam na celý týden -->
         <h2 class="h4 mb-3"><?= esc(t('nakup_nadpis')) ?></h2>
-        <div class="card shadow-sm mb-2 karta-tisk">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th><?= esc(t('th_potravina')) ?></th>
-                            <th class="text-end"><?= esc(t('th_mnozstvi')) ?></th>
-                            <th class="text-end"><?= esc(t('th_cena_100g')) ?></th>
-                            <th><?= esc(t('th_obchod')) ?></th>
-                            <th class="text-end"><?= esc(t('th_cena_celkem')) ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php $cenaTydne = 0.0; ?>
-                        <?php foreach ($nakupTyden as $polozka): ?>
-                            <?php $cenaTydne += (float) $polozka['cena_celkem']; ?>
-                            <tr>
-                                <td>
-                                    <?= esc($polozka['nazev']) ?>
-                                    <?php if ($polozka['sleva']): ?>
-                                        <span class="badge bg-warning text-dark ms-1"><?= esc(t('sleva_kratky')) ?></span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="text-end"><?= esc(fmt((float) $polozka['gramy'], 0)) ?> g</td>
-                                <td class="text-end"><?= esc(mena_zobraz((float) $polozka['cena_za_100g'])) ?></td>
-                                <td>
-                                    <?= $polozka['obchod'] !== null ? esc($polozka['obchod']) : '—' ?>
-                                </td>
-                                <td class="text-end"><?= esc(mena_zobraz((float) $polozka['cena_celkem'])) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <th colspan="4" class="text-end"><?= esc(t('celkem_tyden')) ?></th>
-                            <th class="text-end"><?= esc(mena_zobraz($cenaTydne)) ?></th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
+        <?php
+        $nakupPolozky = $nakupTyden;
+        $nakupSoucetPopisek = t('celkem_tyden');
+        require __DIR__ . '/nakup_tabulka.php';
+        ?>
 
         <div class="d-flex justify-content-between align-items-center mb-5 no-tisk">
             <span class="text-muted small">

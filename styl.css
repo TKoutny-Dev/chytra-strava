@@ -687,6 +687,27 @@ main a:not(.btn):not(.nav-link):not(.navbar-brand):not(.om-moznost-tematu):hover
         opacity: 1 !important;
         transform: none !important;
     }
+    /* tabulky se nerozřezávají mezi stránky a hlavička se opakuje */
+    tr, .card, .alert {
+        page-break-inside: avoid;
+    }
+    thead {
+        display: table-header-group;
+    }
+    h2 {
+        page-break-after: avoid;
+    }
+    /* badge slevy musí být čitelné i černobíle */
+    .badge {
+        border: 1px solid #666;
+        color: #000 !important;
+        background: #fff !important;
+    }
+    /* úspory zůstanou zvýrazněné */
+    .text-success-emphasis {
+        color: #000 !important;
+        font-weight: 700 !important;
+    }
 }
 
 /* ---------- 14) PŘÍSTUPNOST: Minimum POHYBU ---------- */

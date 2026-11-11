@@ -21,6 +21,11 @@ $chyba = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_zkontroluj()) {
         $chyba = t('chyba_csrf');
+    } elseif (($_SESSION['prihlas_zamk_do'] ?? 0) > time()) {
+        // OCHRANA PROTI HRUBÉ SÍLE: po 5 neúspěšných pokusech je
+        // přihlášení na 15 minut uzamčeno (zámek žije v session)
+        $zbyvaMinut = max(1, (int) ceil(($_SESSION['prihlas_zamk_do'] - time()) / 60));
+        $chyba = t('chyba_zamknuto', ['%minuty%' => (string) $zbyvaMinut]);
     } else {
         $email = trim((string) ($_POST['email'] ?? ''));
         $heslo = (string) ($_POST['heslo'] ?? '');
@@ -37,8 +42,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($uzivatel === false || $uzivatel['hash_hesla'] === null
             || !password_verify($heslo, $uzivatel['hash_hesla'])) {
             // Říkáme JEN obecnou chybu – neodhalíme, že e-mail existuje (prevence profilování)
+            $pokusy = ($_SESSION['prihlas_pokusy'] ?? 0) + 1;
+            if ($pokusy >= 5) {
+                // 5. špatný pokus -> 15minutový zámek
+                $_SESSION['prihlas_zamk_do'] = time() + 15 * 60;
+                $_SESSION['prihlas_pokusy'] = 0;
+            } else {
+                $_SESSION['prihlas_pokusy'] = $pokusy;
+                // drobné náhodné zpomalení = drahší útok hrubou silou
+                usleep(random_int(200000, 500000));
+            }
             $chyba = t('chyba_prihlaseni');
         } else {
+            // úspěch – počítadla pokusů vynulujeme
+            unset($_SESSION['prihlas_pokusy'], $_SESSION['prihlas_zamk_do']);
             session_regenerate_id(true);
             $_SESSION['uzivatel'] = [
                 'id'    => (int) $uzivatel['id'],
