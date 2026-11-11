@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         (function () {
             try {
-                var t = localStorage.getItem('optimeal-motiv') || 'system';
+                var t = localStorage.getItem('optimeal-motiv') || 'dark';
                 var dark = t === 'dark'
                     || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                 document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');

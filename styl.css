@@ -1,78 +1,87 @@
 /* ============================================================
-   styl.css – OptiMeal design system
+   styl.css – OptiMeal design system (MONOCHROM / DARK)
    ------------------------------------------------------------
-   - pracuje s CSS proměnnými -> snadné světlé/tmavé téma
+   - striktně monochromatická paleta: hluboká čerň, antracit,
+     křupavě bílá – žádné barvy, jen světlo a stín
+   - tmavý motiv je VÝCHOZÍ; světlý motiv je jeho inverze
    - Bootstrap 5.3 řídí téma atributem <html data-bs-theme="...">
    - motiv přepíná skript motiv.js (světlo / tma / systém)
-   - vše responzivní (mobil -> desktop)
+   - mikrointerakce: spotlight za kurzorem, inverze tlačítek,
+     zářící okraje, vjezdové animace (řídí motiv.js)
    ============================================================ */
 
-/* ---------- 1) FONTY A PÍSMO ---------- */
+/* ---------- 0) GEOMETRICKÝ FONT (hlavice) ---------- */
 
-/* digitální znaková sada – čistá a čitelná v obou tématech */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* ---------- 1) TÉMA: PROMĚNNÉ ---------- */
+
+:root {
+    /* tmavé téma = výchozí identita celé aplikace */
+    --om-pozadi:        #0a0a0a;   /* hluboká čerň pod Fieldem */
+    --om-pozadi-2:      #050505;
+    --om-panel:         #141414;   /* antracitová plocha karet */
+    --om-panel-2:       #1c1c1c;   /* zvednutá plocha (hlavičky, tabulky) */
+    --om-text:          #fafafa;   /* křupavá bílá */
+    --om-text-slabo:    #a3a3a3;   /* neutrální šedý popis */
+    --om-border:        rgba(255, 255, 255, .09);
+    --om-border-silny:  rgba(255, 255, 255, .22);
+    --om-svetlo:        #ffffff;   /* akcent = čistá bílá */
+    --om-svetlo-slabo:  rgba(255, 255, 255, .08);
+    --om-zare:          0 0 0 1px rgba(255, 255, 255, .28), 0 0 32px rgba(255, 255, 255, .10);
+    --om-stin:          0 1px 2px rgba(0, 0, 0, .5), 0 12px 32px rgba(0, 0, 0, .45);
+    --om-stin-zvednuty: 0 2px 6px rgba(0, 0, 0, .6), 0 24px 56px rgba(0, 0, 0, .6);
+    --om-radius:        1rem;
+    --om-prechod:       background-color .3s cubic-bezier(.4, 0, .2, 1),
+                        color .3s cubic-bezier(.4, 0, .2, 1),
+                        border-color .3s ease,
+                        box-shadow .3s ease;
+    --om-prevod:        cubic-bezier(.22, 1, .36, 1); /* energický „ease-out-quint“ */
+}
+
+/* světlé téma = přesná inverze (funkce přepínače motivu zůstává) */
+[data-bs-theme="light"] {
+    --om-pozadi:        #ffffff;
+    --om-pozadi-2:      #f5f5f5;
+    --om-panel:         #ffffff;
+    --om-panel-2:       #f5f5f5;
+    --om-text:          #0a0a0a;
+    --om-text-slabo:    #6b6b6b;
+    --om-border:        rgba(10, 10, 10, .10);
+    --om-border-silny:  rgba(10, 10, 10, .25);
+    --om-svetlo:        #0a0a0a;
+    --om-svetlo-slabo:  rgba(10, 10, 10, .05);
+    --om-zare:          0 0 0 1px rgba(10, 10, 10, .30), 0 0 28px rgba(10, 10, 10, .08);
+    --om-stin:          0 1px 2px rgba(0, 0, 0, .06), 0 12px 32px rgba(0, 0, 0, .08);
+    --om-stin-zvednuty: 0 2px 6px rgba(0, 0, 0, .08), 0 24px 56px rgba(0, 0, 0, .14);
+}
+
+/* ---------- 2) ZÁKLAD STRÁNKY ---------- */
+
 body {
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
                  "Helvetica Neue", Arial, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     letter-spacing: -0.01em;
-}
-
-/* velké nadpisy – výraznější a jemně komprimované */
-h1, .display-hero {
-    letter-spacing: -0.03em;
-    font-weight: 800;
-}
-
-/* ---------- 2) TÉMA: PROMĚNNÉ ---------- */
-
-:root {
-    /* světlé téma – „papírový“ podklad se zeleným nádechem */
-    --om-pozadi:        #f4f7f5;
-    --om-pozadi-2:      #e9f0ea;
-    --om-panel:         #ffffff;
-    --om-panels-slabo:  rgba(255, 255, 255, 0.82);
-    --om-text:          #16211b;
-    --om-text-slabo:    #5b6b62;
-    --om-border:        rgba(22, 38, 29, 0.10);
-    --om-zeleno:        #16a34a;
-    --om-zeleno-tmave:  #15803d;
-    --om-zeleno-svetle: #22c55e;
-    --om-akcent:        #0ea5e9;
-    --om-stin:          0 1px 2px rgba(16, 32, 24, .06), 0 8px 24px rgba(16, 32, 24, .07);
-    --om-stin-zvednuty: 0 2px 4px rgba(16, 32, 24, .08), 0 16px 40px rgba(16, 32, 24, .14);
-    --om-radius:        1rem;
-    --om-prechod:       background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
-}
-
-[data-bs-theme="dark"] {
-    /* tmavé téma – hluboká „grafitova“, zůstává čitelné */
-    --om-pozadi:        #0d1310;
-    --om-pozadi-2:      #121a15;
-    --om-panel:         #171f1a;
-    --om-panels-slabo:  rgba(23, 31, 26, 0.78);
-    --om-text:          #e7efe9;
-    --om-text-slabo:    #9aaea1;
-    --om-border:        rgba(231, 239, 233, 0.10);
-    --om-zeleno:        #22c55e;
-    --om-zeleno-tmave:  #16a34a;
-    --om-zeleno-svetle: #4ade80;
-    --om-akcent:        #38bdf8;
-    --om-stin:          0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
-    --om-stin-zvednuty: 0 2px 4px rgba(0, 0, 0, .5), 0 16px 40px rgba(0, 0, 0, .55);
-}
-
-/* ---------- 3) ZÁKLAD STRÁNKY ---------- */
-
-body {
     background-color: var(--om-pozadi);
     color: var(--om-text);
-    /* jemný gradient v pozadí – dodá prostoru hloubku */
-    background-image: radial-gradient(1200px 500px at 15% -10%,
-                          color-mix(in srgb, var(--om-zeleno) 12%, transparent), transparent 60%),
-                      radial-gradient(1000px 500px at 110% 10%,
-                          color-mix(in srgb, var(--om-akcent) 9%, transparent), transparent 60%);
+    /* čistá čerň s jediným rozměrným „měsíčním“ osvětlením */
+    background-image: radial-gradient(1100px 480px at 50% -12%,
+                          rgba(255, 255, 255, .055), transparent 62%);
     background-attachment: fixed;
     transition: var(--om-prechod);
+}
+
+/* nadpisy – geometrický Space Grotesk, výrazná hierarchie */
+h1, h2, h3, h4, h5, h6,
+.navbar-brand,
+.display-hero,
+.om-hero-nadpis,
+.card-header strong,
+.modal-title {
+    font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+    letter-spacing: -0.03em;
+    font-weight: 700;
 }
 
 .text-muted {
@@ -80,43 +89,99 @@ body {
 }
 
 ::selection {
-    background: color-mix(in srgb, var(--om-zeleno) 30%, transparent);
+    background: var(--om-text);
+    color: var(--om-pozadi);
 }
 
-/* ---------- 4) NAVIGAČNÍ LIŠTA (glass) ---------- */
-
-.navbar {
-    background: linear-gradient(120deg,
-        color-mix(in srgb, var(--om-zeleno) 88%, black 0%), var(--om-zeleno-tmave));
-    border-bottom: 1px solid rgba(255, 255, 255, .12);
+/* klávesová navigace má vždy viditelný bílý obrys */
+:focus-visible {
+    outline: 2px solid var(--om-text);
+    outline-offset: 2px;
+    border-radius: .4rem;
 }
 
-/* v tmavém režimu „sklo“ s rozostřeným pozadím */
-[data-bs-theme="dark"] .navbar {
-    background: color-mix(in srgb, var(--om-panel) 78%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+/* jemný scroll – plynulé kotvení */
+@media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+}
+
+/* ---------- 3) VJEZDOVÉ ANIMACE (spouští motiv.js) ---------- */
+
+/* prvky označené .om-ceka čekají na .om-odhaleno (IntersectionObserver) */
+.om-ceka {
+    opacity: 0;
+    transform: translateY(18px) scale(.995);
+    will-change: opacity, transform;
+}
+
+@keyframes om-vjet {
+    from { opacity: 0; transform: translateY(18px) scale(.995); }
+    to   { opacity: 1; transform: none; }
+}
+
+.om-odhaleno {
+    animation: om-vjet .65s var(--om-prevod) both;
+}
+
+/* při načtení se stránka jemně „nadechne“ */
+@media (prefers-reduced-motion: no-preference) {
+    main > .container > *,
+    .om-hero {
+        animation: om-vjet .5s var(--om-prevod) both;
+    }
+    .om-hero { animation-delay: .05s; }
+}
+
+/* ---------- 4) NAVIGAČNÍ LIŠTA (černé sklo) ---------- */
+
+.navbar.bg-success {
+    /* přebíjíme Bootstrap zelenou – lišta je čirý antracit */
+    background: rgba(10, 10, 10, .72) !important;
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    border-bottom: 1px solid var(--om-border);
+}
+
+[data-bs-theme="light"] .navbar.bg-success {
+    background: rgba(255, 255, 255, .78) !important;
+    border-bottom: 1px solid var(--om-border);
 }
 
 .navbar .nav-link {
-    color: rgba(255, 255, 255, .85);
+    color: var(--om-text-slabo);
     border-radius: .6rem;
-    transition: background-color .2s ease, color .2s ease;
+    position: relative;
+    transition: var(--om-prechod), transform .2s var(--om-prevod);
+}
+
+.navbar .nav-link:hover {
+    color: var(--om-text);
+    background: var(--om-svetlo-slabo);
+    transform: translateY(-1px);
 }
 
 .navbar-brand,
 .navbar-brand:hover {
-    color: #fff;
+    color: var(--om-text);
+    transition: transform .25s var(--om-prevod);
 }
 
-/* aktivní položka v menu – jemné pilulky */
+.navbar-brand:hover {
+    transform: scale(1.03);
+}
+
+/* aktivní položka – bílá pilulka s černým textem (inverze) */
 .navbar .nav-link.active {
-    background: rgba(255, 255, 255, .16);
-    color: #fff;
+    background: var(--om-text);
+    color: var(--om-pozadi);
     font-weight: 600;
 }
 
-/* přepínač jazyků i přepínač motivu – jednotné pilulky */
+.navbar-text {
+    color: var(--om-text-slabo) !important;
+}
+
+/* přepínač jazyků/motivu – jednotná pilulka */
 .om-pilulka {
     display: inline-flex;
     align-items: center;
@@ -125,19 +190,61 @@ body {
     height: 2.05rem;
     border-radius: 999px;
     font-size: .95rem;
+    color: var(--om-text);
+    border: 1px solid transparent;
     text-decoration: none;
-    transition: background-color .2s ease, transform .15s ease;
+    transition: var(--om-prechod), transform .2s var(--om-prevod);
 }
 
 .navbar .om-pilulka:hover {
-    background: rgba(255, 255, 255, .18);
-    transform: translateY(-1px);
+    background: var(--om-svetlo-slabo);
+    border-color: var(--om-border-silny);
+    transform: translateY(-1px) scale(1.06);
 }
 
 .om-pilulka .om-odkaz-aktivni {
-    outline: 2px solid rgba(255, 255, 255, .6);
+    outline: 2px solid var(--om-border-silny);
     outline-offset: 1px;
     border-radius: inherit;
+}
+
+/* ----------
+   SPOTLIGHT – světelná skvrna za kurzorem na kartách
+   (souřadnice dodává motiv.js přes --mx / --my)
+   ---------- */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .karta-jidla,
+    .card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .karta-jidla::after,
+    .card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity .35s ease;
+        background: radial-gradient(
+            340px circle at var(--mx, 50%) var(--my, 50%),
+            rgba(255, 255, 255, .07), transparent 65%
+        );
+    }
+
+    [data-bs-theme="light"] .karta-jidla::after,
+    [data-bs-theme="light"] .card::after {
+        background: radial-gradient(
+            340px circle at var(--mx, 50%) var(--my, 50%),
+            rgba(10, 10, 10, .05), transparent 65%
+        );
+    }
+
+    .karta-jidla:hover::after,
+    .card:hover::after {
+        opacity: 1;
+    }
 }
 
 /* ---------- 5) KARTY ---------- */
@@ -148,7 +255,22 @@ body {
     background: var(--om-panel);
     color: var(--om-text);
     box-shadow: var(--om-stin);
-    transition: var(--om-prechod);
+    transition: var(--om-prechod), transform .3s var(--om-prevod),
+                box-shadow .3s var(--om-prevod), border-color .3s ease;
+}
+
+/* najetí na kartu: zvednutí + zářící bílý okraj */
+.karta-jidla:hover,
+.card:hover {
+    border-color: var(--om-border-silny);
+    box-shadow: var(--om-stin-zvednuty), var(--om-zare);
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+    .karta-jidla:hover,
+    .card:hover {
+        transform: translateY(-4px) scale(1.008);
+    }
 }
 
 .karta-jidla,
@@ -160,45 +282,37 @@ body {
     overflow: hidden;
 }
 
-/* jídlová karta se při najetí jemně „zvedne“ */
-@media (prefers-reduced-motion: no-preference) {
-    .karta-jidla {
-        transition: var(--om-prechod), transform .22s ease, box-shadow .22s ease;
-    }
-    .karta-jidla:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--om-stin-zvednuty);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    /* uživatel chce minimum pohybu – žádné animace ani prchání */
-    * {
-        transition: none !important;
-        animation: none !important;
-        scroll-behavior: auto !important;
-    }
-}
-
 .card-header,
 .card-footer {
-    background: color-mix(in srgb, var(--om-panel) 94%, var(--om-zeleno) 6%) !important;
+    background: var(--om-panel-2) !important;
     border-bottom: 1px solid var(--om-border);
+    color: var(--om-text);
+}
+
+.card-footer.bg-white {
+    background: var(--om-panel-2) !important;
 }
 
 /* ---------- 6) HERO SEKCE ---------- */
 
 .om-hero {
-    padding: 1.5rem 0 1rem;
+    padding: 2.25rem 0 1.25rem;
 }
 
 .om-hero-nadpis {
-    /* nadpis přes gradient – zelená -> tyrkysová, velikost podle displeje */
+    /* hlavní hláška – bílá s jemným kovovým přechodem do šedi */
     font-size: clamp(1.85rem, 4.2vw, 3rem);
-    background: linear-gradient(100deg, var(--om-zeleno), var(--om-zeleno-svetle) 55%, var(--om-akcent));
+    background: linear-gradient(115deg, #ffffff 20%, #b8b8b8 65%, #7d7d7d);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    font-weight: 700;
+}
+
+[data-bs-theme="light"] .om-hero-nadpis {
+    background: linear-gradient(115deg, #0a0a0a 20%, #4a4a4a 70%, #8a8a8a);
+    -webkit-background-clip: text;
+    background-clip: text;
 }
 
 .om-odrazka {
@@ -207,34 +321,49 @@ body {
     border-radius: 999px;
     font-size: .85rem;
     font-weight: 600;
-    letter-spacing: .02em;
-    color: var(--om-zeleno-tmave);
-    background: color-mix(in srgb, var(--om-zeleno) 14%, transparent);
-    border: 1px solid color-mix(in srgb, var(--om-zeleno) 30%, transparent);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--om-text);
+    background: var(--om-svetlo-slabo);
+    border: 1px solid var(--om-border-silny);
     margin-bottom: .5rem;
+    transition: var(--om-prechod), transform .25s var(--om-prevod);
 }
 
-[data-bs-theme="dark"] .om-odrazka {
-    color: var(--om-zeleno-svetle);
+.om-odrazka:hover {
+    transform: translateY(-1px);
+    border-color: var(--om-text);
+    box-shadow: var(--om-zare);
 }
 
 /* ---------- 7) FORMULÁŘE ---------- */
 
 .form-control,
 .form-select {
-    background: var(--om-panel);
+    background: var(--om-panel-2);
     border-color: var(--om-border);
     color: var(--om-text);
     border-radius: .7rem;
-    transition: var(--om-prechod), border-color .2s ease, box-shadow .2s ease;
+    transition: var(--om-prechod), border-color .2s ease, box-shadow .25s ease;
 }
 
+.form-control::placeholder {
+    color: var(--om-text-slabo);
+    opacity: .7;
+}
+
+/* zaostření: bílý okraj + třpyt, nic barevného */
 .form-control:focus,
 .form-select:focus {
-    background: var(--om-panel);
+    background: var(--om-panel-2);
     color: var(--om-text);
-    border-color: var(--om-zeleno);
-    box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--om-zeleno) 18%, transparent);
+    border-color: var(--om-text);
+    box-shadow: 0 0 0 .2rem rgba(255, 255, 255, .12);
+}
+
+[data-bs-theme="light"] .form-control:focus,
+[data-bs-theme="light"] .form-select:focus {
+    box-shadow: 0 0 0 .2rem rgba(10, 10, 10, .10);
 }
 
 .form-label {
@@ -242,88 +371,224 @@ body {
     font-size: .92rem;
 }
 
-/* hlavní tlačítka – gradient + jemné „zvednutí“ */
-.btn-success {
-    background: linear-gradient(135deg, var(--om-zeleno), var(--om-zeleno-tmave));
-    border: none;
-    box-shadow: 0 6px 18px color-mix(in srgb, var(--om-zeleno) 35%, transparent);
+.form-text {
+    color: var(--om-text-slabo) !important;
 }
 
-.btn-success:hover {
-    background: linear-gradient(135deg, var(--om-zeleno-svetle), var(--om-zeleno));
-}
-
+/* ----------
+   TLAČÍTKA – monochromní inverze:
+   primární (btn-success) = bílá plocha/černý text,
+   hover = zmraštění + záře; outline = obrys, hover = plná inverze
+   ---------- */
 .btn-success,
-.btn-outline-success,
-.btn-light,
-.btn-outline-light,
-.btn-outline-secondary {
+.btn-outline-success {
+    --bs-btn-bg: var(--om-text);
+    --bs-btn-border-color: var(--om-text);
+    --bs-btn-color: var(--om-pozadi);
+    --bs-btn-hover-bg: #ffffff;
+    --bs-btn-hover-border-color: #ffffff;
+    --bs-btn-hover-color: #000000;
+    --bs-btn-active-bg: #e5e5e5;
+    --bs-btn-active-color: #000000;
+    --bs-btn-disabled-bg: var(--om-text);
+    --bs-btn-disabled-border-color: var(--om-text);
+    --bs-btn-disabled-color: var(--om-pozadi);
+    background: var(--om-text);
+    border-color: var(--om-text);
+    color: var(--om-pozadi);
+    font-weight: 600;
     border-radius: .7rem;
-    transition: var(--om-prechod), transform .15s ease;
+    transition: var(--om-prechod), transform .2s var(--om-prevod),
+                box-shadow .25s ease;
+}
+
+.btn-outline-success {
+    background: transparent;
+    color: var(--om-text);
+}
+
+.btn-outline-success:hover {
+    background: var(--om-text);
+    color: var(--om-pozadi);
+}
+
+.btn-success:hover,
+.btn-outline-success:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 28px rgba(255, 255, 255, .18), 0 0 0 1px rgba(255, 255, 255, .35);
+}
+
+[data-bs-theme="light"] .btn-success:hover,
+[data-bs-theme="light"] .btn-outline-success:hover {
+    box-shadow: 0 10px 28px rgba(10, 10, 10, .22), 0 0 0 1px rgba(10, 10, 10, .3);
+}
+
+.btn-success:active,
+.btn-outline-success:active {
+    transform: translateY(0) scale(.98);
+}
+
+/* neutrální obrysová tlačítka – stejná logika inverze */
+.btn-outline-secondary,
+.btn-outline-light {
+    border-color: var(--om-border-silny);
+    color: var(--om-text);
+    border-radius: .7rem;
+    background: transparent;
+    transition: var(--om-prechod), transform .2s var(--om-prevod);
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-light:hover {
+    background: var(--om-text);
+    border-color: var(--om-text);
+    color: var(--om-pozadi);
+    transform: translateY(-1px);
+}
+
+/* destruktivní akce zůstávají střídmé: obrys, hover plná inverze */
+.btn-outline-danger {
+    border-color: var(--om-border-silny);
+    color: var(--om-text);
+    border-radius: .7rem;
+    transition: var(--om-prechod), transform .2s var(--om-prevod);
+}
+
+.btn-outline-danger:hover {
+    background: var(--om-text);
+    border-color: var(--om-text);
+    color: var(--om-pozadi);
+    transform: translateY(-1px);
 }
 
 .btn:active {
     transform: translateY(1px);
 }
 
+/* křížek modálu ve tmě musí být vidět */
+[data-bs-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%);
+}
+
 /* ---------- 8) TABULKY A PÁSKY ---------- */
 
 .table {
     --bs-table-bg: transparent;
+    --bs-table-color: var(--om-text);
+    --bs-table-border-color: var(--om-border);
     color: var(--om-text);
 }
 
+.table-hover > tbody > tr {
+    transition: background-color .2s ease;
+}
+
 .table-hover > tbody > tr:hover > * {
-    --bs-table-hover-bg: color-mix(in srgb, var(--om-zeleno) 7%, transparent);
+    --bs-table-hover-bg: var(--om-svetlo-slabo);
+    --bs-table-hover-color: var(--om-text);
     box-shadow: none;
 }
 
 thead.table-light,
 tfoot.table-light {
-    background: color-mix(in srgb, var(--om-panel) 92%, var(--om-zeleno) 8%),
-                var(--om-pozadi-2) !important;
+    background: var(--om-panel-2) !important;
     color: var(--om-text);
+    --bs-table-color: var(--om-text);
 }
 
 thead.table-light th,
 tfoot.table-light th {
     background: transparent;
-    color: inherit;
+    color: var(--om-text-slabo);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: .78rem;
+    letter-spacing: .06em;
+}
+
+tfoot th {
+    color: var(--om-text) !important;
+}
+
+/* pásky – vše v jedné škále šedé/bílé */
+.badge {
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+.badge.bg-warning,
+.badge.bg-warning.text-dark {
+    /* značka slevy: bílá pilulka s černým textem */
+    background: var(--om-text) !important;
+    color: var(--om-pozadi) !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .25), 0 0 14px rgba(255, 255, 255, .12);
+    transition: var(--om-prechod), transform .2s var(--om-prevod);
+}
+
+tr:hover .badge.bg-warning,
+.karta-jidla:hover .badge.bg-warning {
+    transform: scale(1.05);
 }
 
 .progress {
-    background: color-mix(in srgb, var(--om-text) 10%, transparent);
+    background: var(--om-svetlo-slabo);
     border-radius: 999px;
 }
 
 .progress-bar {
-    background: linear-gradient(90deg, var(--om-zeleno), var(--om-zeleno-svetle));
+    background: var(--om-text) !important;
 }
-.progress-bar.bg-warning {
-    background: linear-gradient(90deg, #f59e0b, #fbbf24) !important;
-}
+
 .progress-bar.bg-danger {
-    background: linear-gradient(90deg, #dc2626, #f87171) !important;
+    background: var(--om-text-slabo) !important;
 }
 
-/* znak slevy: zlatý stitok se světelnou aurou */
-.karta-jidla .badge.bg-warning,
-.badge.bg-warning {
-    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.25);
+.progress-bar.bg-warning {
+    background: var(--om-text-slabo) !important;
 }
 
-/* ---------- 9) MODÁL NASTAVENÍ TÉMATU ---------- */
+/* ---------- 9) FLASH ZPRÁVY A ALERTY ---------- */
+
+.alert {
+    border-radius: var(--om-radius);
+    border: 1px solid var(--om-border-silny);
+    background: var(--om-panel);
+    color: var(--om-text);
+    box-shadow: var(--om-stin);
+}
+
+.alert-success { border-left: 3px solid var(--om-text); }
+.alert-danger  { border-left: 3px solid var(--om-text); border-color: var(--om-border-silny); }
+.alert-warning { border-left: 3px double var(--om-text-slabo); }
+
+.alert .btn-close {
+    filter: invert(1) grayscale(100%);
+}
+
+[data-bs-theme="light"] .alert .btn-close {
+    filter: none;
+}
+
+/* ---------- 10) MODÁL A NASTAVENÍ ---------- */
 
 .modal-content {
     background: var(--om-panel);
     color: var(--om-text);
     border: 1px solid var(--om-border);
     border-radius: var(--om-radius);
-    box-shadow: var(--om-stin-zvednuty);
+    box-shadow: var(--om-stin-zvednuty), 0 0 80px rgba(255, 255, 255, .05);
 }
 
-/* 3-stavový přepínač motivu (světlo / tma / systém)  */
-/* horizontální mřížka, funguje i na mobilu          */
+.modal-header,
+.modal-footer {
+    border-color: var(--om-border);
+}
+
+.modal-backdrop.show {
+    opacity: .78;
+}
+
+/* 3-stavový přepínač motivu + přepínač měny */
 .om-prepinac-tematu {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -334,17 +599,19 @@ tfoot.table-light th {
     position: relative;
     border: 1px solid var(--om-border);
     border-radius: .8rem;
-    background: var(--om-pozadi);
+    background: var(--om-pozadi-2);
     color: var(--om-text-slabo);
     padding: .6rem .3rem .5rem;
     text-align: center;
     cursor: pointer;
-    transition: var(--om-prechod);
+    transition: var(--om-prechod), transform .2s var(--om-prevod);
 }
 
 .om-moznost-tematu:hover {
-    border-color: var(--om-zeleno);
+    border-color: var(--om-text);
     color: var(--om-text);
+    transform: translateY(-2px);
+    box-shadow: var(--om-zare);
 }
 
 .om-moznost-tematu .ikona {
@@ -358,21 +625,33 @@ tfoot.table-light th {
     font-weight: 600;
 }
 
-/* vybraný stav – zelený rámec a jemné pozadí */
+/* vybraný stav – plná inverze: bílá plocha, černý text */
 .om-moznost-tematu.aktivni {
-    border-color: var(--om-zeleno);
-    background: color-mix(in srgb, var(--om-zeleno) 12%, transparent);
-    color: var(--om-text);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--om-zeleno) 18%, transparent);
+    background: var(--om-text);
+    border-color: var(--om-text);
+    color: var(--om-pozadi);
+    box-shadow: var(--om-zare);
 }
 
-/* náhled bubliny v systémovém stavu (jaké téma teď právě odpovídá OS) */
 .om-moznost-tematu .os-stav {
     font-size: .68rem;
     opacity: .75;
 }
 
-/* ---------- 10) RESPONZIVITA ---------- */
+/* ---------- 11) ODKAZY V TEXTU ---------- */
+
+main a:not(.btn):not(.nav-link):not(.navbar-brand):not(.om-moznost-tematu) {
+    color: var(--om-text);
+    text-decoration-color: var(--om-border-silny);
+    text-underline-offset: 3px;
+    transition: text-decoration-color .2s ease, opacity .2s ease;
+}
+
+main a:not(.btn):not(.nav-link):not(.navbar-brand):not(.om-moznost-tematu):hover {
+    text-decoration-color: var(--om-text);
+}
+
+/* ---------- 12) RESPONZIVITA ---------- */
 
 @media (max-width: 767.98px) {
     body {
@@ -381,7 +660,6 @@ tfoot.table-light th {
     .om-hero-nadpis {
         font-size: clamp(1.6rem, 7vw, 2.2rem);
     }
-    /* tabulky slev/seznamu se na úzkém displeji lépe zarovnají */
     .table-responsive {
         border-radius: var(--om-radius);
     }
@@ -390,7 +668,7 @@ tfoot.table-light th {
     }
 }
 
-/* ---------- 11) TISK NÁKUPNÍHO SEZNAMU ---------- */
+/* ---------- 13) TISK NÁKUPNÍHO SEZNAMU ---------- */
 
 @media print {
     .no-tisk {
@@ -405,11 +683,31 @@ tfoot.table-light th {
         box-shadow: none !important;
         border: 1px solid #ccc;
     }
+    .om-ceka {
+        opacity: 1 !important;
+        transform: none !important;
+    }
 }
 
-/* ---------- 12) DETAILY, CO VYPADNÍ DOBŘE NA MOBILU ---------- */
+/* ---------- 14) PŘÍSTUPNOST: Minimum POHYBU ---------- */
 
-/* svislé mezery u flash zpráv a tlačítek na velmi malých displejích */
+@media (prefers-reduced-motion: reduce) {
+    /* uživatel chce minimum pohybu – žádné animace ani prchání */
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+        scroll-behavior: auto !important;
+    }
+    .om-ceka {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* ---------- 15) DETAILY PRO MOBIL ---------- */
+
 @media (max-width: 575.98px) {
     .btn-lg {
         font-size: 1rem;
