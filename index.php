@@ -101,8 +101,14 @@ $generovat = ($autoGenerovat ?? false)
     || isset($_GET['uzivatel'])
     || isset($_GET['cil_kalorie']);
 
+// týdenní režim: ?tyden=1 vygeneruje CELÝ TÝDEN + společný nákupní seznam
+$tydenniRezim = isset($_GET['tyden']) && (int) $_GET['tyden'] === 1;
+
 $jidelnicekVysledek = null;
-if ($generovat) {
+$tydenniPlan = null;
+if ($generovat && $tydenniRezim) {
+    $tydenniPlan = vygeneruj_tydenni_plan($pdo, $cile);
+} elseif ($generovat) {
     $jidelnicekVysledek = vygeneruj_jidelnicek($pdo, $cile);
     $nakupniSeznam = sestav_nakupni_seznam($jidelnicekVysledek['jidelnicek']);
 }
@@ -259,6 +265,10 @@ function panelTik(int $aktualni, float $cilovy): array
 
                 <div class="col-12 text-end">
                     <input type="hidden" name="generovat" value="1">
+                    <button type="submit" class="btn btn-outline-success btn-lg px-3 me-2" name="tyden" value="1"
+                            title="<?= esc(t('tyden_nadpis')) ?>">
+                        <?= esc(t('tyden_tlacitko')) ?>
+                    </button>
                     <button type="submit" class="btn btn-success btn-lg px-4">
                         <?= esc(t('tlacitko_generovat')) ?>
                     </button>
@@ -267,7 +277,7 @@ function panelTik(int $aktualni, float $cilovy): array
         </div>
     </div>
 
-    <?php if ($jidelnicekVysledek === null): ?>
+    <?php if ($jidelnicekVysledek === null && $tydenniPlan === null): ?>
         <div class="alert alert-info no-tisk">
             <?= t('prazdno_zprava') /* obsahuje vlastní <strong> – vědomě bez esc */ ?>
         </div>
@@ -398,6 +408,162 @@ function panelTik(int $aktualni, float $cilovy): array
             <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
                 <?= esc(t('tlacitko_tisk')) ?>
             </button>
+        </div>
+    <?php endif; ?>
+
+    <!-- ====================== TÝDENNÍ PLÁN ====================== -->
+    <?php if ($tydenniPlan !== null):
+        $tydenData = $tydenniPlan['tyden'];
+        $dnyPlan   = $tydenniPlan['dny'];
+        $nakupTyden = $tydenniPlan['nakup'];
+    ?>
+        <h2 class="h4 mb-3"><?= esc(t('tyden_nadpis')) ?></h2>
+
+        <!-- souhrn týdne -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="small text-muted"><?= esc(t('tyden_metrika_kalorie')) ?></div>
+                        <div class="fs-5 fw-bold"><?= esc(fmt($tydenData['kalorie'], 0)) ?> kcal</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="small text-muted"><?= esc(t('tyden_metrika_prumer')) ?></div>
+                        <div class="fs-5 fw-bold"><?= esc(fmt($tydenData['kalorie'] / 7, 0)) ?> kcal</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="small text-muted"><?= esc(t('tyden_metrika_cena')) ?></div>
+                        <div class="fs-5 fw-bold"><?= esc(mena_zobraz($tydenData['cena'])) ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="small text-muted"><?= esc(t('tyden_metrika_cena_prumer')) ?></div>
+                        <div class="fs-5 fw-bold"><?= esc(mena_zobraz($tydenData['cena'] / 7)) ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7 dní: co se jí každý den -->
+        <div class="card shadow-sm mb-4 karta-tisk">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th><?= esc(t('tyden_souhrn_den')) ?></th>
+                            <?php foreach (array_keys(PODILY_JIDEL) as $nazevJidla): ?>
+                                <th><?= esc(t('jidlo_' . $nazevJidla)) ?></th>
+                            <?php endforeach; ?>
+                            <th class="text-end"><?= esc(t('kcal_label')) ?></th>
+                            <th class="text-end"><?= esc(t('th_cena_celkem')) ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php for ($den = 1; $den <= 7; $den++):
+                            $denData = $dnyPlan[$den]['celkem'];
+                        ?>
+                            <tr>
+                                <td class="fw-semibold"><?= esc(t('den_' . $den)) ?></td>
+                                <?php foreach (array_keys(PODILY_JIDEL) as $nazevJidla): ?>
+                                    <td class="small">
+                                        <?php foreach ($dnyPlan[$den]['jidelnicek'][$nazevJidla]['jidla'] as $jidlo): ?>
+                                            <div>
+                                                <?= esc($jidlo['nazev']) ?>
+                                                <span class="text-muted">· <?= esc(fmt((float) $jidlo['gramy'], 0)) ?> g</span>
+                                                <?php if ($jidlo['sleva']): ?>
+                                                    <span class="badge bg-warning text-dark ms-1"><?= esc(t('sleva_kratky')) ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </td>
+                                <?php endforeach; ?>
+                                <td class="text-end"><?= esc(fmt((float) $denData['kalorie'], 0)) ?></td>
+                                <td class="text-end"><?= esc(mena_zobraz((float) $denData['cena'])) ?></td>
+                            </tr>
+                        <?php endfor; ?>
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="5" class="text-end"><?= esc(t('celkem_tyden')) ?></th>
+                            <th class="text-end"><?= esc(fmt($tydenData['kalorie'], 0)) ?></th>
+                            <th class="text-end"><?= esc(mena_zobraz($tydenData['cena'])) ?></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- společný nákupní seznam na celý týden -->
+        <h2 class="h4 mb-3"><?= esc(t('nakup_nadpis')) ?></h2>
+        <div class="card shadow-sm mb-2 karta-tisk">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th><?= esc(t('th_potravina')) ?></th>
+                            <th class="text-end"><?= esc(t('th_mnozstvi')) ?></th>
+                            <th class="text-end"><?= esc(t('th_cena_100g')) ?></th>
+                            <th><?= esc(t('th_obchod')) ?></th>
+                            <th class="text-end"><?= esc(t('th_cena_celkem')) ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $cenaTydne = 0.0; ?>
+                        <?php foreach ($nakupTyden as $polozka): ?>
+                            <?php $cenaTydne += (float) $polozka['cena_celkem']; ?>
+                            <tr>
+                                <td>
+                                    <?= esc($polozka['nazev']) ?>
+                                    <?php if ($polozka['sleva']): ?>
+                                        <span class="badge bg-warning text-dark ms-1"><?= esc(t('sleva_kratky')) ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-end"><?= esc(fmt((float) $polozka['gramy'], 0)) ?> g</td>
+                                <td class="text-end"><?= esc(mena_zobraz((float) $polozka['cena_za_100g'])) ?></td>
+                                <td>
+                                    <?= $polozka['obchod'] !== null ? esc($polozka['obchod']) : '—' ?>
+                                </td>
+                                <td class="text-end"><?= esc(mena_zobraz((float) $polozka['cena_celkem'])) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="4" class="text-end"><?= esc(t('celkem_tyden')) ?></th>
+                            <th class="text-end"><?= esc(mena_zobraz($cenaTydne)) ?></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-5 no-tisk">
+            <span class="text-muted small">
+                <?= t('poznamka_obchody') /* obsahuje vlastní <strong>/<em> – vědomě bez esc */ ?>
+            </span>
+            <div>
+                <a class="btn btn-outline-secondary me-2" href="index.php?<?= esc(http_build_query([
+                    'generovat' => '1',
+                    'cil_kalorie' => $cile['kalorie'], 'cil_bilkoviny' => $cile['bilkoviny'],
+                    'cil_sacharidy' => $cile['sacharidy'], 'cil_tuky' => $cile['tuky'],
+                ])) ?>">
+                    <?= esc(t('tyden_zpet')) ?>
+                </a>
+                <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                    <?= esc(t('tlacitko_tisk')) ?>
+                </button>
+            </div>
         </div>
     <?php endif; ?>
 </main>

@@ -136,6 +136,24 @@ function LANGJS_SLOVNIKY(): array
             'jidlo_Svačina'   => 'Svačina',
             'jidlo_Večeře'    => 'Večeře',
 
+            /* --- týdenní plán --- */
+            'tyden_tlacitko'       => '📅 Týdenní plán',
+            'tyden_nadpis'         => '📅 Týdenní jídelníček (Po–Ne)',
+            'tyden_zpet'           => '← Zpět na denní plán',
+            'tyden_metrika_kalorie' => 'Kalorie za týden',
+            'tyden_metrika_prumer'  => 'Průměr na den',
+            'tyden_metrika_cena'    => 'Nákup na celý týden',
+            'tyden_metrika_cena_prumer' => 'Průměrný den',
+            'tyden_souhrn_den'     => 'Součet dne',
+            'celkem_tyden'         => 'Celkem za týden',
+            'den_1'                => 'Pondělí',
+            'den_2'                => 'Úterý',
+            'den_3'                => 'Středa',
+            'den_4'                => 'Čtvrtek',
+            'den_5'                => 'Pátek',
+            'den_6'                => 'Sobota',
+            'den_7'                => 'Neděle',
+
             /* --- footer --- */
             'paticka_text'    => 'OptiMeal – maturitní projekt • PHP 8 + MySQL (PDO) + Bootstrap 5',
             'paticka_nahled'  => 'technický náhled dotazu',
@@ -312,6 +330,24 @@ function LANGJS_SLOVNIKY(): array
             'jidlo_Oběd'      => 'Lunch',
             'jidlo_Svačina'   => 'Snack',
             'jidlo_Večeře'    => 'Dinner',
+
+            /* --- weekly plan --- */
+            'tyden_tlacitko'       => '📅 Weekly plan',
+            'tyden_nadpis'         => '📅 Weekly meal plan (Mon–Sun)',
+            'tyden_zpet'           => '← Back to the daily plan',
+            'tyden_metrika_kalorie' => 'Calories for the week',
+            'tyden_metrika_prumer'  => 'Average per day',
+            'tyden_metrika_cena'    => 'Shopping for the whole week',
+            'tyden_metrika_cena_prumer' => 'Average day',
+            'tyden_souhrn_den'     => 'Day total',
+            'celkem_tyden'         => 'Total for the week',
+            'den_1'                => 'Monday',
+            'den_2'                => 'Tuesday',
+            'den_3'                => 'Wednesday',
+            'den_4'                => 'Thursday',
+            'den_5'                => 'Friday',
+            'den_6'                => 'Saturday',
+            'den_7'                => 'Sunday',
 
             /* --- footer --- */
             'paticka_text'    => 'OptiMeal • PHP 8 + MySQL (PDO) + Bootstrap 5',

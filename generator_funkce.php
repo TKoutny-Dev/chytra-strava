@@ -153,7 +153,7 @@ function skore_potraviny(array $p, string $kategorie): float
  *      Offset dle dne v týdnu (date('N') = 1–7) a pořadí jídla:
  *      jídelník je jiný každý den, přitom DETERMINISTICKÝ.
  */
-function vyber_kandidata(array $kandidati, int $poradi, array $pouziteId = []): ?array
+function vyber_kandidata(array $kandidati, int $poradi, array $pouziteId = [], ?int $denniPosun = null): ?array
 {
     if ($kandidati === []) {
         return null;
@@ -182,8 +182,11 @@ function vyber_kandidata(array $kandidati, int $poradi, array $pouziteId = []): 
         }
     }
 
-    // 3) denní rotace – pondělí ≠ úterý, snídaně ≠ oběd
-    $offset = (int) date('N') + $poradi * 2;
+    // 3) denní rotace – pondělí ≠ úterý, snídaně ≠ oběd;
+    //    $denniPosun určuje den (1–7, výchozí „dnes" = date('N')) –
+    //    týdenní plán tak dostane každý den JINÝ jídelníček
+    $den = $denniPosun ?? (int) date('N');
+    $offset = $den + $poradi * 2;
     return $kandidati[$offset % count($kandidati)];
 }
 
@@ -216,7 +219,7 @@ function vytvor_jidlo(array $p, int $gramy): array
  * Vybraná ID přibudou do pole $pouziteId => další jídla upřednostní
  * jiné potraviny (viz vyber_kandidata()).
  */
-function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS, float $cilT, float $cilK, array &$pouziteId = []): array
+function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS, float $cilT, float $cilK, array &$pouziteId = [], ?int $denniPosun = null): array
 {
     $jidla   = [];
     $zbyva   = [
@@ -237,8 +240,8 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
     };
 
     // --- 1. kotva (bílkovinová potravina) ---
-    $kotva = vyber_kandidata($kategorie['bilkovinova'], $poradi, $pouziteId)
-             ?? vyber_kandidata($kategorie['sacharidova'], $poradi, $pouziteId);
+    $kotva = vyber_kandidata($kategorie['bilkovinova'], $poradi, $pouziteId, $denniPosun)
+             ?? vyber_kandidata($kategorie['sacharidova'], $poradi, $pouziteId, $denniPosun);
     if ($kotva !== null && $zbyva['b'] >= 5) {
         $pouziteId[] = (int) $kotva['id'];
         $gramy = $gramace($kotva, 'bilkoviny', $zbyva['b'], 30, 400);
@@ -263,7 +266,7 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
     if ($nizkoproteinovi !== []) {
         $kandidatiS = $nizkoproteinovi;
     }
-    $dopln = vyber_kandidata($kandidatiS, $poradi, $pouziteId);
+    $dopln = vyber_kandidata($kandidatiS, $poradi, $pouziteId, $denniPosun);
     if ($dopln !== null && $zbyva['s'] >= 10 && $zbyva['k'] >= 60) {
         $pouziteId[] = (int) $dopln['id'];
         $gramy = $gramace($dopln, 'sacharidy', $zbyva['s'], 30, 350);
@@ -277,7 +280,7 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
     }
 
     // --- 3. doplněk tuků (jen když zbývá potřeba i kcal prostor) ---
-    $tukovina = vyber_kandidata($kategorie['tukova'], $poradi, $pouziteId);
+    $tukovina = vyber_kandidata($kategorie['tukova'], $poradi, $pouziteId, $denniPosun);
     if ($tukovina !== null && $zbyva['t'] >= 8 && $zbyva['k'] >= 80) {
         $pouziteId[] = (int) $tukovina['id'];
         $gramy = $gramace($tukovina, 'tuky', $zbyva['t'], 20, 100);
@@ -297,7 +300,7 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
  * Hlavní funkce generátoru.
  * Vrací: ['jidelnicek' => [jídlo => souhrn], 'celkem' => denní souhrn]
  */
-function vygeneruj_jidelnicek(PDO $pdo, array $cile): array
+function vygeneruj_jidelnicek(PDO $pdo, array $cile, ?int $denniPosun = null): array
 {
     // krok 1 – data + krok 3 – kategorie a skóre
     $potraviny = nacti_potraviny_se_slevami($pdo);
@@ -330,7 +333,8 @@ function vygeneruj_jidelnicek(PDO $pdo, array $cile): array
             (float) $cile['sacharidy'] * $podil,
             (float) $cile['tuky'] * $podil,
             (float) $cile['kalorie'] * $podil,
-            $pouziteId
+            $pouziteId,
+            $denniPosun
         );
 
         $souhrn = ['kalorie' => 0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0];
@@ -396,4 +400,49 @@ function sestav_nakupni_seznam(array $jidelnicek): array
     usort($seznam, static fn(array $a, array $b): int => $b['cena_celkem'] <=> $a['cena_celkem']);
 
     return $seznam;
+}
+
+/* ============================================================
+ * TÝDENNÍ PLÁN (7 dní + společný nákupní seznam)
+ * ============================================================ */
+
+/**
+ * Naplánuje CELÝ TÝDEN (pondělí–neděle):
+ *   - každý den vlastní jídelníček – rotace dle dne v týdnu
+ *     ($denniPosun = 1–7), takže den se denem liší, plán je
+ *     však DETERMINISTICKÝ (stejný den = stejný jídelníček);
+ *   - veškerá jídla projdou jedním SPOJENÝM nákupním seznamem
+ *     (gramace potraviny se sečtou za celý týden a u každé je
+ *     uvedeno, v kterém obchodě koupit nejvýhodněji).
+ *
+ * Vrací ['dny' => [1..7 => výsledek dne], 'tyden' => součty,
+ *        'nakup' => společný nákupní seznam na celý týden].
+ */
+function vygeneruj_tydenni_plan(PDO $pdo, array $cile): array
+{
+    $dny = [];
+    $tyden = ['kalorie' => 0.0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0];
+    $spojenyJidelnicek = [];   // klíč „den-jídlo", aby se dny nesloučily
+
+    for ($den = 1; $den <= 7; $den++) {
+        $vysledek = vygeneruj_jidelnicek($pdo, $cile, $den);
+        $dny[$den] = $vysledek;
+
+        $tyden['kalorie']   += $vysledek['celkem']['kalorie'];
+        $tyden['bilkoviny'] += $vysledek['celkem']['bilkoviny'];
+        $tyden['sacharidy'] += $vysledek['celkem']['sacharidy'];
+        $tyden['tuky']      += $vysledek['celkem']['tuky'];
+        $tyden['cena']      += $vysledek['celkem']['cena'];
+
+        // spojíme jídla všech dnů pro společný nákupní seznam
+        foreach ($vysledek['jidelnicek'] as $nazevJidla => $jidloDenne) {
+            $spojenyJidelnicek[$den . '-' . $nazevJidla] = $jidloDenne;
+        }
+    }
+
+    return [
+        'dny'    => $dny,
+        'tyden'  => $tyden,
+        'nakup'  => sestav_nakupni_seznam($spojenyJidelnicek),
+    ];
 }
