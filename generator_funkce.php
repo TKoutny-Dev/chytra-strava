@@ -146,9 +146,12 @@ function skore_potraviny(array $p, string $kategorie): float
  *   1) FILTR POUŽITÝCH: potraviny už obsažené v dnešním jídelníčku
  *      (přinesené přes $pouziteId) jsou odsunuty k pozadí – dřív
  *      se spolkne ostatní nabídka, než se tatáž potravina zopakuje.
- *   2) DENNÍ ROTACE: offset podle dne v týdnu (date('N') = 1–7)
- *      a pořadí jídla – jídelník je jiný každý den, ale přitom
- *      DETERMINISTICKÝ (stejný den = stejný výsledek = obhajitelno).
+ *   2) DENNÍ ROTACE mezi cenově SROVNATELNÝMI kandidáty: rotujeme
+ *      jen v rámci potravin se skóre alespoň 85 % nejlepšího –
+ *      výrazně levnější alternativa proto vždy zvítězí (sleva
+ *      rozhoduje), ale dvě stejně výhodné potraviny se střídají.
+ *      Offset dle dne v týdnu (date('N') = 1–7) a pořadí jídla:
+ *      jídelník je jiný každý den, přitom DETERMINISTICKÝ.
  */
 function vyber_kandidata(array $kandidati, int $poradi, array $pouziteId = []): ?array
 {
@@ -165,7 +168,21 @@ function vyber_kandidata(array $kandidati, int $poradi, array $pouziteId = []): 
         $kandidati = $nove;
     }
 
-    // 2) denní rotace – pondělí ≠ úterý, snídaně ≠ oběd
+    // 2) rotujeme jen mezi cenově srovnatelnými kandidáty (skóre
+    //    alespoň 85 % nejlepšího) – nejvýhodnější vždy vyhraje,
+    //    ale "remíza na cenu" se střídá den od dne a jídlo od jídla
+    $nejlepsi = (float) $kandidati[0]['skore'];
+    if ($nejlepsi > 0.0) {
+        $srovnatelni = array_values(array_filter(
+            $kandidati,
+            static fn(array $p): bool => (float) $p['skore'] >= $nejlepsi * 0.85
+        ));
+        if ($srovnatelni !== []) {
+            $kandidati = $srovnatelni;
+        }
+    }
+
+    // 3) denní rotace – pondělí ≠ úterý, snídaně ≠ oběd
     $offset = (int) date('N') + $poradi * 2;
     return $kandidati[$offset % count($kandidati)];
 }
