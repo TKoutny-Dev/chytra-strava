@@ -13,12 +13,26 @@ require_once __DIR__ . '/spolecne.php';
 
 $pdo = getPDO();
 
-/* ---------- profily uživatelů z databáze (tabulka uzivatele) ---------- */
-$uzivatele = $pdo->query(
-    "SELECT id, jmeno, cilove_kalorie, cil_bilkoviny, cil_sacharidy, cil_tuky
-     FROM uzivatele
-     ORDER BY jmeno"
-)->fetchAll();
+/* ---------- profily uživatelů z databáze (tabulka uzivatele) ----------
+ * SOUKROMÍ: přihlášený vidí jen SVŮJ profil, admin vidí všechny.
+ * Nepřihlášený návštěvník žádný nevidí – cíle si zadá ručně.      */
+if (je_admin()) {
+    $uzivatele = $pdo->query(
+        "SELECT id, jmeno, cilove_kalorie, cil_bilkoviny, cil_sacharidy, cil_tuky
+         FROM uzivatele
+         ORDER BY jmeno"
+    )->fetchAll();
+} elseif (prihlaseny_uzivatel() !== null) {
+    $dotazMoje = $pdo->prepare(
+        "SELECT id, jmeno, cilove_kalorie, cil_bilkoviny, cil_sacharidy, cil_tuky
+         FROM uzivatele
+         WHERE id = :id"
+    );
+    $dotazMoje->execute(['id' => (int) prihlaseny_uzivatel()['id']]);
+    $uzivatele = $dotazMoje->fetchAll();
+} else {
+    $uzivatele = [];
+}
 
 /* ---------- řešení cílů: profil / formulář / výchozí hodnoty ---------- */
 
@@ -34,7 +48,12 @@ if (isset($_GET['uzivatel']) && ctype_digit($_GET['uzivatel'])) {
     $dotazProfil->execute(['id' => (int) $_GET['uzivatel']]);
     $profil = $dotazProfil->fetch();
 
-    if ($profil !== false) {
+    // profil lze použít jen SVŮJ (admin smí kterýkoliv – ukázky na obhajobu);
+    // pokus o cizí profil tiše ignorujeme (výchozí cíle, nic neprozradíme)
+    if ($profil !== false
+        && (je_admin()
+            || (prihlaseny_uzivatel() !== null
+                && (int) prihlaseny_uzivatel()['id'] === (int) $profil['id']))) {
         $vybranyProfil = $profil;
         $cile = [
             'kalorie'   => (int) $profil['cilove_kalorie'],
@@ -51,10 +70,34 @@ if (isset($_GET['uzivatel']) && ctype_digit($_GET['uzivatel'])) {
         'sacharidy' => clamp_int((int) ($_GET['cil_sacharidy'] ?? 280), 0, 600),
         'tuky'      => clamp_int((int) ($_GET['cil_tuky'] ?? 80), 20, 200),
     ];
+} elseif (prihlaseny_uzivatel() !== null) {
+    // 3) AUTOMATICKÉ KALORIE: přihlášený uživatel bez zadání dostane
+    //    své uložené cíle (spočítané na profil.php z údajů o těle
+    //    metodou Mifflin-St Jeor) a jídelníček se vygeneruje sám –
+    //    bez klikání a bez ručního přepisování čísel.
+    $dotazAuto = $pdo->prepare(
+        "SELECT id, jmeno, cilove_kalorie, cil_bilkoviny, cil_sacharidy, cil_tuky
+         FROM uzivatele
+         WHERE id = :id"
+    );
+    $dotazAuto->execute(['id' => (int) prihlaseny_uzivatel()['id']]);
+    $profilAuto = $dotazAuto->fetch();
+
+    if ($profilAuto !== false) {
+        $vybranyProfil = $profilAuto;
+        $cile = [
+            'kalorie'   => (int) $profilAuto['cilove_kalorie'],
+            'bilkoviny' => (int) $profilAuto['cil_bilkoviny'],
+            'sacharidy' => (int) $profilAuto['cil_sacharidy'],
+            'tuky'      => (int) $profilAuto['cil_tuky'],
+        ];
+        $autoGenerovat = true;   // plán s mými cíli – automaticky, bez formuláře
+    }
 }
 
 /* ---------- spustí generátor? (jen máme-li zadány cíle) ---------- */
-$generovat = isset($_GET['generovat'])
+$generovat = ($autoGenerovat ?? false)
+    || isset($_GET['generovat'])
     || isset($_GET['uzivatel'])
     || isset($_GET['cil_kalorie']);
 
@@ -121,6 +164,7 @@ function panelTik(int $aktualni, float $cilovy): array
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link active" href="index.php"><?= esc(t('nav_generator')) ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="demo_dotaz.php"><?= esc(t('nav_slevy_prehled')) ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="profil.php"><?= esc(t('nav_profil')) ?></a></li>
                 <?php if (prihlaseny_uzivatel() !== null): ?>
                     <li class="nav-item"><a class="nav-link" href="katalog.php"><?= esc(t('nav_katalog')) ?></a></li>
                 <?php endif; ?>
@@ -181,6 +225,11 @@ function panelTik(int $aktualni, float $cilovy): array
                         <?php endforeach; ?>
                     </select>
                     <div class="form-text"><?= esc(t('profil_hint')) ?></div>
+                    <?php if (!empty($autoGenerovat)): ?>
+                        <div class="form-text text-success-emphasis fw-semibold">
+                            ✅ <?= esc(t('profil_auto_note')) ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="col-sm-6 col-lg-3">
