@@ -95,6 +95,71 @@ if (isset($_GET['uzivatel']) && ctype_digit($_GET['uzivatel'])) {
     }
 }
 
+/* ---------- POST: uložení vygenerovaného plánu do historie ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_zkontroluj()) {
+        flash(t('chyba_csrf'), 'warning');
+        header('Location: index.php');
+        exit;
+    }
+
+    if (prihlaseny_uzivatel() === null) {
+        // ukládání plánů je pro přihlášené – návrat zpět po přihlášení
+        $_SESSION['cil_presmerovani'] = 'index.php';
+        flash(t('plan_vyzaduje_prihlaseni'), 'warning');
+        header('Location: prihlaseni.php');
+        exit;
+    }
+
+    if ((string) ($_POST['akce'] ?? '') === 'uloz_plan') {
+        $typ = (($_POST['typ'] ?? 'den') === 'tyden') ? 'tyden' : 'den';
+        $cilePost = [
+            'kalorie'   => clamp_int((int) ($_POST['cil_kalorie'] ?? 2400), 800, 5000),
+            'bilkoviny' => clamp_int((int) ($_POST['cil_bilkoviny'] ?? 160), 40, 300),
+            'sacharidy' => clamp_int((int) ($_POST['cil_sacharidy'] ?? 280), 0, 600),
+            'tuky'      => clamp_int((int) ($_POST['cil_tuky'] ?? 80), 20, 200),
+        ];
+
+        // generátor je DETERMINISTICKÝ (stejný den = stejný výstup),
+        // proto můžeme plán bezpečně vygenerovat znovu a uložit jeho JSON
+        $vysledek = $typ === 'tyden'
+            ? vygeneruj_tydenni_plan($pdo, $cilePost)
+            : vygeneruj_jidelnicek($pdo, $cilePost);
+
+        $uloz = $pdo->prepare(
+            "INSERT INTO plany (id_uzivatele, typ, cil_kalorie, cil_bilkoviny,
+                                cil_sacharidy, cil_tuky, data)
+             VALUES (:u, :typ, :k, :b, :s, :t, :data)"
+        );
+        $uloz->execute([
+            'u'   => (int) prihlaseny_uzivatel()['id'],
+            'typ' => $typ,
+            'k'   => $cilePost['kalorie'], 'b' => $cilePost['bilkoviny'],
+            's'   => $cilePost['sacharidy'], 't' => $cilePost['tuky'],
+            'data' => json_encode(['cile' => $cilePost, 'vysledek' => $vysledek], JSON_UNESCAPED_UNICODE),
+        ]);
+
+        flash(t('plan_ulozen'));
+
+        // po uložení zůstaneme u stejného plánu (GET parametry dle typu)
+        $dotazQ = http_build_query(array_merge(
+            ['generovat' => '1'],
+            $typ === 'tyden' ? ['tyden' => '1'] : [],
+            [
+                'cil_kalorie'   => $cilePost['kalorie'],
+                'cil_bilkoviny' => $cilePost['bilkoviny'],
+                'cil_sacharidy' => $cilePost['sacharidy'],
+                'cil_tuky'      => $cilePost['tuky'],
+            ]
+        ));
+        header('Location: index.php?' . $dotazQ);
+        exit;
+    }
+
+    header('Location: index.php');
+    exit;
+}
+
 /* ---------- spustí generátor? (jen máme-li zadány cíle) ---------- */
 $generovat = ($autoGenerovat ?? false)
     || isset($_GET['generovat'])
@@ -111,22 +176,6 @@ if ($generovat && $tydenniRezim) {
 } elseif ($generovat) {
     $jidelnicekVysledek = vygeneruj_jidelnicek($pdo, $cile);
     $nakupniSeznam = sestav_nakupni_seznam($jidelnicekVysledek['jidelnicek']);
-}
-
-/* ---------- pomocná funkce pro panel cíle vs. realita ---------- */
-function panelTik(int $aktualni, float $cilovy): array
-{
-    $odchylka = ($cilovy > 0) ? ($aktualni - $cilovy) / $cilovy * 100 : 0.0;
-    $shoda = clamp_int((int) round(100 - abs($odchylka)), 0, 100);
-
-    $trida = 'bg-success';
-    if ($shoda < 70) {
-        $trida = 'bg-danger';
-    } elseif ($shoda < 90) {
-        $trida = 'bg-warning text-dark';
-    }
-
-    return ['shoda' => $shoda, 'trida' => $trida];
 }
 ?>
 <!DOCTYPE html>
@@ -171,6 +220,7 @@ function panelTik(int $aktualni, float $cilovy): array
                 <li class="nav-item"><a class="nav-link active" href="index.php"><?= esc(t('nav_generator')) ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="demo_dotaz.php"><?= esc(t('nav_slevy_prehled')) ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="profil.php"><?= esc(t('nav_profil')) ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="plany.php"><?= esc(t('nav_plany')) ?></a></li>
                 <?php if (prihlaseny_uzivatel() !== null): ?>
                     <li class="nav-item"><a class="nav-link" href="katalog.php"><?= esc(t('nav_katalog')) ?></a></li>
                 <?php endif; ?>
@@ -405,9 +455,24 @@ function panelTik(int $aktualni, float $cilovy): array
             <span class="text-muted small">
                 <?= t('poznamka_obchody') /* obsahuje vlastní <strong>/<em> – vědomě bez esc */ ?>
             </span>
-            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
-                <?= esc(t('tlacitko_tisk')) ?>
-            </button>
+            <div>
+                <?php if (prihlaseny_uzivatel() !== null): ?>
+                    <!-- uložení plánu do historie (Mé plány) -->
+                    <form method="post" action="index.php" class="d-inline me-2">
+                        <?= csrf_pole() ?>
+                        <input type="hidden" name="akce" value="uloz_plan">
+                        <input type="hidden" name="typ" value="den">
+                        <input type="hidden" name="cil_kalorie" value="<?= esc($cile['kalorie']) ?>">
+                        <input type="hidden" name="cil_bilkoviny" value="<?= esc($cile['bilkoviny']) ?>">
+                        <input type="hidden" name="cil_sacharidy" value="<?= esc($cile['sacharidy']) ?>">
+                        <input type="hidden" name="cil_tuky" value="<?= esc($cile['tuky']) ?>">
+                        <button type="submit" class="btn btn-outline-success">💾 <?= esc(t('plan_ulozit_tlacitko')) ?></button>
+                    </form>
+                <?php endif; ?>
+                <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                    <?= esc(t('tlacitko_tisk')) ?>
+                </button>
+            </div>
         </div>
     <?php endif; ?>
 
@@ -553,6 +618,19 @@ function panelTik(int $aktualni, float $cilovy): array
                 <?= t('poznamka_obchody') /* obsahuje vlastní <strong>/<em> – vědomě bez esc */ ?>
             </span>
             <div>
+                <?php if (prihlaseny_uzivatel() !== null): ?>
+                    <!-- uložení týdenního plánu do historie (Mé plány) -->
+                    <form method="post" action="index.php" class="d-inline me-2">
+                        <?= csrf_pole() ?>
+                        <input type="hidden" name="akce" value="uloz_plan">
+                        <input type="hidden" name="typ" value="tyden">
+                        <input type="hidden" name="cil_kalorie" value="<?= esc($cile['kalorie']) ?>">
+                        <input type="hidden" name="cil_bilkoviny" value="<?= esc($cile['bilkoviny']) ?>">
+                        <input type="hidden" name="cil_sacharidy" value="<?= esc($cile['sacharidy']) ?>">
+                        <input type="hidden" name="cil_tuky" value="<?= esc($cile['tuky']) ?>">
+                        <button type="submit" class="btn btn-outline-success">💾 <?= esc(t('plan_ulozit_tlacitko')) ?></button>
+                    </form>
+                <?php endif; ?>
                 <a class="btn btn-outline-secondary me-2" href="index.php?<?= esc(http_build_query([
                     'generovat' => '1',
                     'cil_kalorie' => $cile['kalorie'], 'cil_bilkoviny' => $cile['bilkoviny'],

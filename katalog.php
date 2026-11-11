@@ -116,6 +116,7 @@ $celkem = (int) $pdoP->query("SELECT COUNT(*) FROM potraviny")->fetchColumn();
                 <li class="nav-item"><a class="nav-link" href="demo_dotaz.php"><?= esc(t('nav_slevy_prehled')) ?></a></li>
                 <li class="nav-item"><a class="nav-link active" href="katalog.php"><?= esc(t('nav_katalog')) ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="profil.php"><?= esc(t('nav_profil')) ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="plany.php"><?= esc(t('nav_plany')) ?></a></li>
                 <?php if (je_admin()): ?>
                     <li class="nav-item"><a class="nav-link" href="potraviny.php"><?= esc(t('nav_potraviny')) ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="slevy.php"><?= esc(t('nav_slevy')) ?></a></li>

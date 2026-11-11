@@ -159,6 +159,7 @@ usort($potraviny, static fn(array $a, array $b): int => strcmp($a['nazev'], $b['
                 <li class="nav-item"><a class="nav-link active" href="potraviny.php"><?= esc(t('nav_potraviny')) ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="slevy.php"><?= esc(t('nav_slevy')) ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="profil.php"><?= esc(t('nav_profil')) ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="plany.php"><?= esc(t('nav_plany')) ?></a></li>
             </ul>
             <ul class="navbar-nav align-items-lg-center">
                 <li class="nav-item"><a class="nav-link px-2" href="<?= esc(jazyk_odkaz('cs')) ?>" title="Čeština" lang="cs">🇨🇿</a></li>

@@ -405,6 +405,30 @@ function sestav_nakupni_seznam(array $jidelnicek): array
 }
 
 /* ============================================================
+ * POMOCNÍK PRO VYKRESLENÍ: cíl vs. realita
+ * ============================================================ */
+
+/**
+ * Připraví data pro panel „Skutečnost vs. cíle": vrací procenta
+ * shody (100 − |odchylka|) a barvu progress baru dle míry shody.
+ * Je to čistá funkce – používají ji index.php i plany.php.
+ */
+function panelTik(int $aktualni, float $cilovy): array
+{
+    $odchylka = ($cilovy > 0) ? ($aktualni - $cilovy) / $cilovy * 100 : 0.0;
+    $shoda = clamp_int((int) round(100 - abs($odchylka)), 0, 100);
+
+    $trida = 'bg-success';
+    if ($shoda < 70) {
+        $trida = 'bg-danger';
+    } elseif ($shoda < 90) {
+        $trida = 'bg-warning text-dark';
+    }
+
+    return ['shoda' => $shoda, 'trida' => $trida];
+}
+
+/* ============================================================
  * TÝDENNÍ PLÁN (7 dní + společný nákupní seznam)
  * ============================================================ */
 
