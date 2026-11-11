@@ -136,7 +136,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'typ' => $typ,
             'k'   => $cilePost['kalorie'], 'b' => $cilePost['bilkoviny'],
             's'   => $cilePost['sacharidy'], 't' => $cilePost['tuky'],
-            'data' => json_encode(['cile' => $cilePost, 'vysledek' => $vysledek], JSON_UNESCAPED_UNICODE),
+            'data' => json_encode(['cile' => $cilePost, 'vysledek' => $vysledek]),
+            // JSON bez JSON_UNESCAPED_UNICODE – české názvy se uloží jako
+            // \uXXXX sekvence (čisté ASCII), takže data projdou LIBOVOLNOU
+            // znakovou sadou tabulky bez poškození diakritiky; json_decode
+            // je při čtení vrátí zpět do plné UTF-8.
         ]);
 
         flash(t('plan_ulozen'));
