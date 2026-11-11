@@ -52,9 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $aktivita = (string) ($_POST['aktivita'] ?? 'mirna');
         $cilTelo  = (string) ($_POST['cil_telo'] ?? 'udrzet');
 
+        // tělesný tuk v % – NEPOVINNÝ údaz; prázdné = počítáme Mifflin-St Jeor
+        $tukText = trim((string) ($_POST['telo_tuk'] ?? ''));
+        $tukProcento = ($tukText === '') ? null : (float) str_replace(',', '.', $tukText);
+
         $ok = $vaha >= 30.0 && $vaha <= 300.0
             && $vyska >= 100 && $vyska <= 250
             && $vek >= 10 && $vek <= 120
+            && ($tukProcento === null || ($tukProcento >= 3.0 && $tukProcento <= 60.0))
             && isset(AKTIVITA_FAKTORY[$aktivita])
             && isset(CILE_KOREKCE[$cilTelo])
             && ($pohlavi === 'm' || $pohlavi === 'z');
@@ -62,12 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$ok) {
             flash(t('profil_chyba_dat'), 'danger');
         } else {
-            $cile = spocitej_cile($vaha, $vyska, $vek, $pohlavi, $aktivita, $cilTelo);
+            $cile = spocitej_cile($vaha, $vyska, $vek, $pohlavi, $aktivita, $cilTelo, $tukProcento);
 
             $uloz = $pdo->prepare(
                 "UPDATE uzivatele
                  SET vaha = :vaha, vyska = :vyska, vek = :vek,
                      pohlavi = :pohlavi, aktivita = :aktivita, cil_telo = :cil_telo,
+                     telo_tuk = :telo_tuk,
                      cilove_kalorie = :kcal, cil_bilkoviny = :b,
                      cil_sacharidy = :s, cil_tuky = :t
                  WHERE id = :id"   // id Z SESSION – nikdy nelze měnit cizí profil
@@ -75,12 +81,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uloz->execute([
                 'vaha' => $vaha, 'vyska' => $vyska, 'vek' => $vek,
                 'pohlavi' => $pohlavi, 'aktivita' => $aktivita, 'cil_telo' => $cilTelo,
+                'telo_tuk' => $tukProcento,
                 'kcal' => $cile['kalorie'], 'b' => $cile['bilkoviny'],
                 's' => $cile['sacharidy'], 't' => $cile['tuky'],
                 'id' => $idUzivatele,
             ]);
 
+            $vzorec = $tukProcento === null
+                ? t('profil_vzorec_msj')
+                : t('profil_vzorec_km');
+
             flash(t('profil_ulozeno', [
+                '%vzorec%' => $vzorec,
                 '%kcal%' => (string) $cile['kalorie'],
                 '%b%'    => (string) $cile['bilkoviny'],
                 '%s%'    => (string) $cile['sacharidy'],
@@ -126,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $dotaz = $pdo->prepare(
     "SELECT jmeno, email, role, cilove_kalorie, cil_bilkoviny, cil_sacharidy, cil_tuky,
-            vaha, vyska, vek, pohlavi, aktivita, cil_telo
+            vaha, vyska, vek, pohlavi, aktivita, cil_telo, telo_tuk
      FROM uzivatele WHERE id = :id"
 );
 $dotaz->execute(['id' => $idUzivatele]);
@@ -221,6 +233,11 @@ if ($muj === false) {
                 </div>
             </div>
             <div class="text-center mt-3">
+                <span class="text-muted small me-2">
+                    <?= esc(t('profil_vzorec_uzito', [
+                        '%vzorec%' => $muj['telo_tuk'] !== null ? t('profil_vzorec_km') : t('profil_vzorec_msj'),
+                    ])) ?>
+                </span><br>
                 <a class="btn btn-success" href="index.php?uzivatel=<?= $idUzivatele ?>">
                     <?= esc(t('profil_pouzit')) ?> →
                 </a>
@@ -274,6 +291,12 @@ if ($muj === false) {
                             <option value="udrzet"    <?= $muj['cil_telo'] === 'udrzet' ? 'selected' : '' ?>><?= esc(t('cil_udrzet')) ?></option>
                             <option value="zhodnotit" <?= $muj['cil_telo'] === 'zhodnotit' ? 'selected' : '' ?>><?= esc(t('cil_zhodnotit')) ?></option>
                         </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="p_tuk"><?= esc(t('profil_telo_tuk')) ?></label>
+                        <input type="number" id="p_tuk" name="telo_tuk" class="form-control" min="3" max="60"
+                               step="0.1" placeholder="—" value="<?= esc($muj['telo_tuk'] !== null ? (string) $muj['telo_tuk'] : '') ?>">
+                        <div class="form-text"><?= esc(t('profil_telo_tuk_hint')) ?></div>
                     </div>
                 </div>
                 <div class="d-grid mt-4">
