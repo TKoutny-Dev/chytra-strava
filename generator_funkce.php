@@ -147,13 +147,14 @@ function skore_potraviny(array $p, string $kategorie): float
  *      (přinesené přes $pouziteId) jsou odsunuty k pozadí – dřív
  *      se spolkne ostatní nabídka, než se tatáž potravina zopakuje.
  *   2) DENNÍ ROTACE mezi cenově SROVNATELNÝMI kandidáty: rotujeme
- *      jen v rámci potravin se skóre alespoň 85 % nejlepšího –
- *      výrazně levnější alternativa proto vždy zvítězí (sleva
- *      rozhoduje), ale dvě stejně výhodné potraviny se střídají.
+ *      jen v rámci potravin se skóre alespoň $poolMin nejlepšího
+ *      (denní plán 85 % – výrazně levnější alternativa vždy
+ *      zvítězí; týdenní plán 60 % – širší výběr, aby 7 dní
+ *      opravdu znamenalo 7 odlišných jídelníčků).
  *      Offset dle dne v týdnu (date('N') = 1–7) a pořadí jídla:
  *      jídelník je jiný každý den, přitom DETERMINISTICKÝ.
  */
-function vyber_kandidata(array $kandidati, int $poradi, array $pouziteId = [], ?int $denniPosun = null): ?array
+function vyber_kandidata(array $kandidati, int $poradi, array $pouziteId = [], ?int $denniPosun = null, float $poolMin = 0.85): ?array
 {
     if ($kandidati === []) {
         return null;
@@ -169,13 +170,13 @@ function vyber_kandidata(array $kandidati, int $poradi, array $pouziteId = [], ?
     }
 
     // 2) rotujeme jen mezi cenově srovnatelnými kandidáty (skóre
-    //    alespoň 85 % nejlepšího) – nejvýhodnější vždy vyhraje,
+    //    alespoň $poolMin nejlepšího) – nejvýhodnější vždy vyhraje,
     //    ale "remíza na cenu" se střídá den od dne a jídlo od jídla
     $nejlepsi = (float) $kandidati[0]['skore'];
     if ($nejlepsi > 0.0) {
         $srovnatelni = array_values(array_filter(
             $kandidati,
-            static fn(array $p): bool => (float) $p['skore'] >= $nejlepsi * 0.85
+            static fn(array $p): bool => (float) $p['skore'] >= $nejlepsi * $poolMin
         ));
         if ($srovnatelni !== []) {
             $kandidati = $srovnatelni;
@@ -219,7 +220,7 @@ function vytvor_jidlo(array $p, int $gramy): array
  * Vybraná ID přibudou do pole $pouziteId => další jídla upřednostní
  * jiné potraviny (viz vyber_kandidata()).
  */
-function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS, float $cilT, float $cilK, array &$pouziteId = [], ?int $denniPosun = null): array
+function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS, float $cilT, float $cilK, array &$pouziteId = [], ?int $denniPosun = null, float $poolMin = 0.85): array
 {
     $jidla   = [];
     $zbyva   = [
@@ -240,8 +241,8 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
     };
 
     // --- 1. kotva (bílkovinová potravina) ---
-    $kotva = vyber_kandidata($kategorie['bilkovinova'], $poradi, $pouziteId, $denniPosun)
-             ?? vyber_kandidata($kategorie['sacharidova'], $poradi, $pouziteId, $denniPosun);
+    $kotva = vyber_kandidata($kategorie['bilkovinova'], $poradi, $pouziteId, $denniPosun, $poolMin)
+             ?? vyber_kandidata($kategorie['sacharidova'], $poradi, $pouziteId, $denniPosun, $poolMin);
     if ($kotva !== null && $zbyva['b'] >= 5) {
         $pouziteId[] = (int) $kotva['id'];
         $gramy = $gramace($kotva, 'bilkoviny', $zbyva['b'], 30, 400);
@@ -266,7 +267,7 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
     if ($nizkoproteinovi !== []) {
         $kandidatiS = $nizkoproteinovi;
     }
-    $dopln = vyber_kandidata($kandidatiS, $poradi, $pouziteId, $denniPosun);
+    $dopln = vyber_kandidata($kandidatiS, $poradi, $pouziteId, $denniPosun, $poolMin);
     if ($dopln !== null && $zbyva['s'] >= 10 && $zbyva['k'] >= 60) {
         $pouziteId[] = (int) $dopln['id'];
         $gramy = $gramace($dopln, 'sacharidy', $zbyva['s'], 30, 350);
@@ -280,7 +281,7 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
     }
 
     // --- 3. doplněk tuků (jen když zbývá potřeba i kcal prostor) ---
-    $tukovina = vyber_kandidata($kategorie['tukova'], $poradi, $pouziteId, $denniPosun);
+    $tukovina = vyber_kandidata($kategorie['tukova'], $poradi, $pouziteId, $denniPosun, $poolMin);
     if ($tukovina !== null && $zbyva['t'] >= 8 && $zbyva['k'] >= 80) {
         $pouziteId[] = (int) $tukovina['id'];
         $gramy = $gramace($tukovina, 'tuky', $zbyva['t'], 20, 100);
@@ -300,7 +301,7 @@ function naplanuj_jidlo(array $kategorie, int $poradi, float $cilB, float $cilS,
  * Hlavní funkce generátoru.
  * Vrací: ['jidelnicek' => [jídlo => souhrn], 'celkem' => denní souhrn]
  */
-function vygeneruj_jidelnicek(PDO $pdo, array $cile, ?int $denniPosun = null): array
+function vygeneruj_jidelnicek(PDO $pdo, array $cile, ?int $denniPosun = null, float $poolMin = 0.85): array
 {
     // krok 1 – data + krok 3 – kategorie a skóre
     $potraviny = nacti_potraviny_se_slevami($pdo);
@@ -334,7 +335,8 @@ function vygeneruj_jidelnicek(PDO $pdo, array $cile, ?int $denniPosun = null): a
             (float) $cile['tuky'] * $podil,
             (float) $cile['kalorie'] * $podil,
             $pouziteId,
-            $denniPosun
+            $denniPosun,
+            $poolMin
         );
 
         $souhrn = ['kalorie' => 0, 'bilkoviny' => 0.0, 'sacharidy' => 0.0, 'tuky' => 0.0, 'cena' => 0.0];
@@ -409,8 +411,10 @@ function sestav_nakupni_seznam(array $jidelnicek): array
 /**
  * Naplánuje CELÝ TÝDEN (pondělí–neděle):
  *   - každý den vlastní jídelníček – rotace dle dne v týdnu
- *     ($denniPosun = 1–7), takže den se denem liší, plán je
- *     však DETERMINISTICKÝ (stejný den = stejný jídelníček);
+ *     ($denniPosun = 1–7) a ŠIRŠÍ kandidátní bazén (60 % skóre
+ *     nejlepšího oproti dennímu 85 %), takže i při menší nabídce
+ *     databáze je každý den opravdu jiný; plán je však
+ *     DETERMINISTICKÝ (stejný den = stejný jídelníček);
  *   - veškerá jídla projdou jedním SPOJENÝM nákupním seznamem
  *     (gramace potraviny se sečtou za celý týden a u každé je
  *     uvedeno, v kterém obchodě koupit nejvýhodněji).
@@ -425,7 +429,7 @@ function vygeneruj_tydenni_plan(PDO $pdo, array $cile): array
     $spojenyJidelnicek = [];   // klíč „den-jídlo", aby se dny nesloučily
 
     for ($den = 1; $den <= 7; $den++) {
-        $vysledek = vygeneruj_jidelnicek($pdo, $cile, $den);
+        $vysledek = vygeneruj_jidelnicek($pdo, $cile, $den, 0.60);
         $dny[$den] = $vysledek;
 
         $tyden['kalorie']   += $vysledek['celkem']['kalorie'];
