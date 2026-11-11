@@ -316,9 +316,22 @@ $planySeznam = $plany->fetchAll();
 
         <div class="d-flex justify-content-between align-items-center mb-5 no-tisk">
             <a class="btn btn-outline-secondary" href="plany.php"><?= esc(t('plany_zpet')) ?></a>
-            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
-                <?= esc(t('tlacitko_tisk')) ?>
-            </button>
+            <div>
+                <?php if ($planCile !== null): ?>
+                    <a class="btn btn-success me-2" href="index.php?<?= esc(http_build_query([
+                        'generovat'     => '1',
+                        'cil_kalorie'   => (int) $planCile['kalorie'],
+                        'cil_bilkoviny' => (int) $planCile['bilkoviny'],
+                        'cil_sacharidy' => (int) $planCile['sacharidy'],
+                        'cil_tuky'      => (int) $planCile['tuky'],
+                    ])) ?>">
+                        🍽️ <?= esc(t('plan_pouzit_cile')) ?>
+                    </a>
+                <?php endif; ?>
+                <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                    <?= esc(t('tlacitko_tisk')) ?>
+                </button>
+            </div>
         </div>
     <?php endif; ?>
 </main>
