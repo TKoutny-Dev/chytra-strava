@@ -18,10 +18,10 @@ declare(strict_types=1);
 function mena_seznam(): array
 {
     return [
-        // snímek kurzů ECB z 12. listopadu 2026
+        // snímek kurzů ECB z 13. listopadu 2026
         'czk' => ['znacka' => 'Kč', 'kurz' => 1.00,  'desetinna' => 2],
-        'eur' => ['znacka' => '€',  'kurz' => 24.38, 'desetinna' => 2],
-        'usd' => ['znacka' => '$',  'kurz' => 22.00, 'desetinna' => 2],
+        'eur' => ['znacka' => '€',  'kurz' => 24.42, 'desetinna' => 2],
+        'usd' => ['znacka' => '$',  'kurz' => 22.10, 'desetinna' => 2],
     ];
 }
 
